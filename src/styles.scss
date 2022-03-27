@@ -1,0 +1,30 @@
+@import "@angular/material/prebuilt-themes/indigo-pink.css";
+
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 2em;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.fill-remaining-space {
+  flex: 1 1 auto;
+}
+.container {
+  margin: 2em;
+}
+
+.opened {
+  background-color: red;
+}
+
+.closed {
+  background-color: green;
+}
+
+.gateImage {
+  height: 50%;
+  width: 50%;
+}

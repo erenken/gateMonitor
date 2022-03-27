@@ -1,0 +1,9 @@
+<mat-card>
+  <mat-card-title>Status</mat-card-title>
+  <mat-card-content [ngClass]="{'opened': isGateOpen, 'closed': !isGateOpen}"><div>{{ getGateStatus() }}</div></mat-card-content>
+</mat-card>
+<br />
+<mat-card>
+  <mat-card-title>Image</mat-card-title>
+  <mat-card-content><img src="{{ gateImageUrl }}" alt="Gate" class="gateImage" /></mat-card-content>
+</mat-card>
