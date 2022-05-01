@@ -9,3 +9,9 @@ export interface RemootioDeviceEvents {
   outgoingmessage: (frame?: SentFrames, unencryptedPayload?: SentEcryptedFrameContent) => void;
   incomingmessage: (frame: ReceivedFrames, decryptedPayload?: ReceivedEncryptedFrameContent) => void;
 }
+
+export interface RemootioConnectionEvents {
+  connecting: boolean;
+  connected: boolean;
+  status: string;
+}

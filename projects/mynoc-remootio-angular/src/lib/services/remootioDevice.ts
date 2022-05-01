@@ -2,289 +2,147 @@
 * Converted from remootio node library (https://github.com/remootio/remootio-api-client-node/blob/master/src/index.ts
 */
 
-import { EventEmitter } from '@angular/core';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
+import { AnonymousSubject } from 'rxjs/internal/Subject';
+import { WebSocketSubject } from 'rxjs/webSocket';
 import * as apicrypto from './remootioApiCrypto';
-import { RemootioDeviceEvents } from './remootioDeviceEvents';
-import { ReceivedFrames, RemootioAction, SentFrames } from './remootioFrames';
+import { IRemootioDeviceConfig } from './remootioDeviceConfig';
+import { EncryptedFrame, ReceivedFrames, RemootioAction, RemootioActionResponse, SentFrames } from './remootioFrames';
 
-/**
- * RemootioDevice class implements an API client for a signle device. You should create one instance per Remootio device you have.
- * The class takes care of keeping the connection alive by sending a PING message every sendPingMessageEveryXMs milliseconds to the Remootio device.
- * If no response is received within pingReplyTimeoutXMs=(sendPingMessageEveryXMs/2) time after a PING message, the connection is assumed to be broken.
- *
- * *** Constructor ***
- * The constructor takes 3 parameters: DeviceIp, ApiSecretKey, ApiAuthKey (all of them are available in the Remootio app)
- * @param {string} DeviceIp - the IP address of the Remootio device (this info is available in the Remootio app)
- * @param {string} ApiSecretKey - the API Secret Key of the Remootio device (this info is available in the Remootio app)
- * @param {string} ApiAuthKey - the API Auth Key of the Remootio device (this info is available in the Remootio app)
- * @param {string} [sendPingMessageEveryXMs=60000] - the API client sends a ping frame to the Remootio device every sendPingMessageEveryXMs milliseconds to keep the connection alive. Remootio closes the connection if no message is received for 120 seconds. If no message is received from Remootio within (sendPingMessageEveryXMs/2) milliseconds after PING frame is sent the API client considers the connection to be broken and closes it. It's not recommended to set sendPingMessageEveryXMs below 10000 (10 seconds).
- *
- * *** Properties ***
- * @property isConnected - shows if the API client is connected to the Remootio device's websocket API or not
- * @property isAuthenticated - shows if the API client is connected to the Remootio device's websocket API or not
- * @property theLastActionId - gets the id of the last action sent to the Remootio API (lastActionId), any new action sent should contain the incremented value of the the last action id modulo 0x7FFFFFFF. Incrementing this value is handled automatically by the RamootioDevice class. The only time you need this property if you want to send an arbitrary ENCRYPED frame using sendEncryptedFrame()
- *
- * *** Methods ****
- * @method connect(autoReconnect) - connect the API client to the Remootio device (via websocket)
- * @param {boolean} autoReconnect - the API client will try to reconnect to the Remootio device when the connection is lost
- *
- * @method disconnect() - disconnect the API client from the Remootio device
- *
- * @method authenticate() - authenticates the client with the Remootio API by first sending an AUTH frame, and then sending a QUERY action as a response to the authentication challenge from the server
- *
- * @method sendPing() - send a PING frame
- *
- * @method sendHello() - send a HELLO frame
- *
- * @method sendQuery() - send a QUERY action //needs authentication
- *
- * @method sendTrigger() - send a TRIGGER action //needs authentication
- *
- * @method sendTriggerSecondary() - send a TRIGGER_SECONDARY action //needs authentication
- *
- * @method sendOpen() - send a OPEN action //needs authentication
- *
- * @method sendClose() - send a CLOSE action //needs authentication
- *
- * @method holdTriggerOutputActive(durationMins) Holds the output triggered by the sendTrigger command active for durationMins
- *
- * @method holdTriggerSecondaryOutputActive(durationMins) Holds the secondary output triggered by the sendTriggerSecondary command active for durationMins
- *
- * @method holdOpenOutputActive(durationMins) Holds the output triggered by the sendOpen command active for durationMins
- *
- * @method holdCloseOutputActive(durationMins) Holds the output triggered by the sendClose command active for durationMins
- *
- * @method sendRestart() - send a RESTART action //needs authentication
- *
- * @method sendFrame(frame) - send a normal frame the sendPing and sendHello and authenticate functions above use this
- *
- * @method sendEncryptedFrame(unencryptedPayload) - send an encrypted frame the sendQuery, sendTrigger, sendOpen, sendClose, sendRestart functions use this
- *
- * *** Events ***
- * The class emits the following events:
- * @event connecting - when it tries to connect
- *
- * @event connected - when it is connected
- *
- * @event authenticated - when the authentication flow is finished (the client receives a response to his first QUERY action after the AUTH message)
- *
- * @event disconnect - when the connection is lost
- *
- * @event error - if there is any error
- *
- * @event outgoingmessage - the event is emitted whenever a message is sent to the API with the following two parameters
- * @param {Object} frame - contains the javascript object of the JSON frame
- * @param {Object} unencryptedPayload - contains the javascript object of the unencrypted payload (frame.data.payload) if it's an ENCRYPTED frame
- *
- * @event incomingmessage - the event is emitted whenever a message is received from the Remootio device with the following two parameters
- * @param {Object} frame - contains the javascript object of the JSON frame received
- * @param {Object} decryptedPayload - contains the javascript object of the decrypted payload (frame.data.payload) if it's an ENCRYPTED frame
- *
- */
-
-
-export declare interface RemootioDevice {
-  on<E extends keyof RemootioDeviceEvents>(event: E, listener: RemootioDeviceEvents[E]): this;
-  emit<E extends keyof RemootioDeviceEvents>(event: E, ...args: Parameters<RemootioDeviceEvents[E]>): boolean;
-}
-
-export class RemootioDevice extends EventEmitter {
-  private apiSecretKey: string;
-  private apiAuthKey: string;
-  private deviceIp: string;
-  private webSocketSubject?: WebSocketSubject<RemootioDeviceEvents>;
+export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames | undefined> {
+  private webSocketSubject?: WebSocketSubject<ReceivedFrames | SentFrames | undefined>;
   private apiSessionKey?: string;
   private lastActionId?: number;
-  private autoReconnect: boolean;
-  private sendPingMessageEveryXMs: number;
-  private sendPingMessageIntervalHandle?: ReturnType<typeof setInterval>;
-  private pingReplyTimeoutXMs: number;
-  private pingReplyTimeoutHandle?: ReturnType<typeof setTimeout>;
   private waitingForAuthenticationQueryActionResponse?: boolean;
 
-  /**
-   * Constructor to create a RemootioDevice instance. You should create one instance per Remootio device you have.
-   * @param {string} DeviceIp - ip address of the device (as seen in the Remootio app) e.g. "192.168.1.155"
-   * @param {string} ApiSecretKey - API Secret Key of the device (as seen in the Remootio app). It is a hexstring representing a 256 bit long value e.g. "12b3f03211c384736b8a1906635f4abc90074e680138a689caf03485a971efb3"
-   * @param {string} ApiAuthKey - API Auth Key of the device (as seen in the Remootio app). It is a hexstring representing a 256 bit long value e.g. "74ca13b56b3c898670a67e8f36f8b8a61340738c82617ba1398ae7ca62f1670a"
-   * @param {number} [sendPingMessageEveryXMs=60000] - the API client sends a ping frame to the Remootio device every sendPingMessageEveryXMs milliseconds to keep the connection alive. Remootio closes the connection if no message is received for 120 seconds. If no message is received from Remootio within (sendPingMessageEveryXMs/2) milliseconds after PING frame is sent the API client considers the connection to be broken and closes it. It's not recommended to set sendPingMessageEveryXMs below 10000 (10 seconds).
-   */
-  constructor(DeviceIp: string, ApiSecretKey: string, ApiAuthKey: string, sendPingMessageEveryXMs?: number) {
+  constructor(private deviceConfig: IRemootioDeviceConfig) {
     super();
+
     //Input check
     let hexstringRe = /[0-9A-Fa-f]{64}/g;
-    if (!hexstringRe.test(ApiSecretKey)) {
+    if (!hexstringRe.test(deviceConfig.apiSecretKey)) {
       console.error('ApiSecretKey must be a hexstring representing a 256bit long byteArray');
     }
     hexstringRe = /[0-9A-Fa-f]{64}/g;
-    if (!hexstringRe.test(ApiAuthKey)) {
+    if (!hexstringRe.test(deviceConfig.apiAuthKey)) {
       console.error('ApiAuthKey must be a hexstring representing a 256bit long byteArray');
     }
     //Set config
-    this.apiSecretKey = ApiSecretKey;
-    this.apiAuthKey = ApiAuthKey;
-    this.deviceIp = DeviceIp;
     this.webSocketSubject = undefined;
 
     //Session related data - will be filled out by the code
     this.apiSessionKey = undefined; //base64 encoded
     this.lastActionId = undefined;
 
-    this.autoReconnect = false; //Reconnect automatically if connection is lost
-
-    if (sendPingMessageEveryXMs) {
-      this.sendPingMessageEveryXMs = sendPingMessageEveryXMs; //in ms , send a ping message every PingMessagePeriodicity time, a PONG reply is expected
-    } else {
-      this.sendPingMessageEveryXMs = 60000;
+    if (!deviceConfig.sendPingMessageEveryXMs) {
+      deviceConfig.sendPingMessageEveryXMs = 60000; //in ms , send a ping message every PingMessagePeriodicity time, a PONG reply is expected
     }
-
-    this.sendPingMessageIntervalHandle = undefined; //we fire up a setInterval upon connection to the device to send ping messages every x seconds
-    this.pingReplyTimeoutXMs = this.sendPingMessageEveryXMs / 2; //in ms, if a PONG frame (or any other frame) doesn't arrive pingReplyTimeoutXMs milliseconds after we send a PING frame, we assume the connection is broken
-    this.pingReplyTimeoutHandle = undefined; //We check for pong response for all our ping messages, if they don't arrive we assume the connection is broken and close it
-    this.waitingForAuthenticationQueryActionResponse = false; //needed to emit the 'authenticated' even on the successful response to the QUERY action sent in the authentication flow
   }
 
-  /**
-   * Connect to the Remootio device's websocket API
-   * @param {boolean} autoReconnect - If autoReconnect is true, the API client will try to reconnect to the device everytime the connection is lost (recommended)
-   */
-  public connect(autoReconnect: boolean): void {
-    if (autoReconnect == true) {
-      this.autoReconnect = true;
-    }
-
+  public connect(): void {
     //Set session data to NULL
     this.apiSessionKey = undefined;
     this.lastActionId = undefined;
     this.waitingForAuthenticationQueryActionResponse = undefined;
 
     //We connect to the API
-    this.webSocketSubject = webSocket<RemootioDeviceEvents>(`ws://${this.deviceIp}:8080`);
-    this.emit('connecting');
+    this.webSocketSubject = new WebSocketSubject<ReceivedFrames | SentFrames | undefined>({
+      url: `ws://${this.deviceConfig.deviceIp}:8080/`,
+      openObserver: {
+        next: (event) => this.openObserver(event)
+      },
+      closeObserver: {
+        next: (event) => this.closeObserver(event)
+      }
+    });
 
-    this.webSocketSubject.subscribe(dataFromServer => console.log(dataFromServer));
+    this.webSocketSubject.subscribe({
+      next: data => this.dataReceived(data as ReceivedFrames),
+      error: err => console.error(err),
+      complete: () => this.completed()
+    });
   }
 
-  //   this.webSocketSubject.subscribe(dataFromServer => {
-  //     this.emit('connected');
+  private openObserver(event: Event)
+  {
+    this.apiSessionKey = undefined;
+    this.lastActionId = undefined;
 
-  //     //We send a ping message every 60 seconds to keep the connection alive
-  //     //If the Remootio API gets no message for 120 seconds, it closes the connection
-  //     this.sendPingMessageIntervalHandle = setInterval(() => {
-  //       if (!this.webSocketSubject?.closed) {
-  //         //Create a timeout that is cleared once a PONG message is received - if it doesn't arrive, we assume the connection is broken
-  //         this.pingReplyTimeoutHandle = setTimeout(() => {
-  //           this.emit(
-  //             'error',
-  //             'No response for PING message in ' + this.pingReplyTimeoutXMs + ' ms. Connection is broken.'
-  //           );
-  //           if (this.webSocketSubject) {
-  //             this.webSocketSubject.unsubscribe();
-  //             this.pingReplyTimeoutHandle = undefined;
-  //           }
-  //         }, this.pingReplyTimeoutXMs);
-  //         this.sendPing();
-  //       }
-  //     }, this.sendPingMessageEveryXMs);
-  //   });
+    this.deviceConfig.openObserver?.next(event);
+  }
 
-  //   this.webSocketSubject.on('message', (data) => {
-  //     try {
-  //       //We process the messsage received from the API
-  //       const rcvMsgJson: ReceivedFrames = JSON.parse(data.toString()); //It must be JSON format
+  private closeObserver(event: CloseEvent)
+  {
+    this.deviceConfig.closeObserver?.next(event);
+  }
 
-  //       //If we get any reply after our PING message (not only PONG) we clear the pingReplyTimeout
-  //       if (this.pingReplyTimeoutHandle != undefined) {
-  //         clearTimeout(this.pingReplyTimeoutHandle);
-  //         this.pingReplyTimeoutHandle = undefined;
-  //       }
+  private dataReceived(data: ReceivedFrames)
+  {
+    switch (data.type) {
+      case "ERROR":
+        console.log(data);
+        break;
 
-  //       //we process the incoming frames
-  //       if (rcvMsgJson && rcvMsgJson.type == 'ENCRYPTED') {
-  //         //if it's an encrypted frame we decrypt it and then this.emit the event
-  //         const decryptedPayload = apicrypto.remootioApiDecryptEncrypedFrame(
-  //           rcvMsgJson,
-  //           this.apiSecretKey,
-  //           this.apiAuthKey,
-  //           this.apiSessionKey
-  //         );
-  //         //we this.emit the encrypted frames with decrypted payload
-  //         this.emit('incomingmessage', rcvMsgJson, decryptedPayload);
+      case "ENCRYPTED":
+        this.encryptedMessage(data);
+        break;
 
-  //         if (decryptedPayload != undefined) {
-  //           if ('challenge' in decryptedPayload) {
-  //             //If it's an auth challenge
-  //             //It's a challenge message
-  //             this.apiSessionKey = decryptedPayload.challenge.sessionKey; //we update the session key
-  //             this.lastActionId = decryptedPayload.challenge.initialActionId; //and the actionId (frame counter for actions)
+      default:
+        console.log(data);
+        break;
+    }
+  }
 
-  //             this.waitingForAuthenticationQueryActionResponse = true;
-  //             this.sendQuery();
-  //           }
+  private completed()
+  {
+  }
 
-  //           if ('response' in decryptedPayload && decryptedPayload.response.id != undefined) {
-  //             //If we get a response to one of our actions, we incremenet the last action id
-  //             if (this.lastActionId != undefined) {
-  //               if (
-  //                 this.lastActionId < decryptedPayload.response.id || //But we only increment if the response.id is greater than the current counter value
-  //                 (decryptedPayload.response.id == 0 && this.lastActionId == 0x7fffffff)
-  //               ) {
-  //                 //or when we overflow from 0x7FFFFFFF to 0
-  //                 this.lastActionId = decryptedPayload.response.id; //We update the lastActionId
-  //               }
-  //             } else {
-  //               console.warn('Unexpected error - lastActionId is undefined');
-  //             }
+  private encryptedMessage(data: EncryptedFrame)
+  {
+    const decryptedPayload = apicrypto.remootioApiDecryptEncrypedFrame(
+      data,
+      this.deviceConfig.apiSecretKey,
+      this.deviceConfig.apiAuthKey,
+      this.apiSessionKey
+    );
 
-  //             //if it's the response to our QUERY action sent during the authentication flow the 'authenticated' event should be emitted
-  //             if (
-  //               decryptedPayload.response.type == 'QUERY' &&
-  //               this.waitingForAuthenticationQueryActionResponse == true
-  //             ) {
-  //               this.waitingForAuthenticationQueryActionResponse = false;
-  //               this.emit('authenticated');
-  //             }
-  //           }
-  //         } else {
-  //           this.emit('error', 'Authentication or encryption error');
-  //         }
-  //       } else {
-  //         //we this.emit the normal frames
-  //         this.emit('incomingmessage', rcvMsgJson, undefined);
-  //       }
-  //     } catch (e: any) {
-  //       this.emit('error', e.message);
-  //     }
-  //   });
+    if (decryptedPayload != undefined) {
+      if ('challenge' in decryptedPayload) {
+        //If it's an auth challenge
+        //It's a challenge message
+        this.apiSessionKey = decryptedPayload.challenge.sessionKey; //we update the session key
+        this.lastActionId = decryptedPayload.challenge.initialActionId; //and the actionId (frame counter for actions)
 
-  //   this.webSocketSubject.on('close', () => {
-  //     //Clear the ping message interval if the connection is lost
-  //     if (this.sendPingMessageIntervalHandle != undefined) {
-  //       clearInterval(this.sendPingMessageIntervalHandle);
-  //       this.sendPingMessageIntervalHandle = undefined;
-  //     }
+        this.waitingForAuthenticationQueryActionResponse = true;
+        this.sendQuery();
+      } else {
+        this.deviceConfig.messageObserver?.next(decryptedPayload as RemootioActionResponse);
+      }
 
-  //     if (this.autoReconnect == true) {
-  //       this.connect(this.autoReconnect);
-  //     }
+      if ('response' in decryptedPayload && decryptedPayload.response.id != undefined) {
+        //If we get a response to one of our actions, we incremenet the last action id
+        if (this.lastActionId != undefined) {
+          if (
+            this.lastActionId < decryptedPayload.response.id || //But we only increment if the response.id is greater than the current counter value
+            (decryptedPayload.response.id == 0 && this.lastActionId == 0x7fffffff)
+          ) {
+            //or when we overflow from 0x7FFFFFFF to 0
+            this.lastActionId = decryptedPayload.response.id; //We update the lastActionId
+          }
+        } else {
+          this.deviceConfig.errorObserver?.error('Unexpected error - lastActionId is undefined');
+        }
 
-  //     this.emit('disconnect');
-  //   });
-
-  //   this.webSocketSubject.on('error', () => {
-  //     //Connection error
-  //   });
-  // }
-
-  /**
-   * Disconnect from the Remootio device's websocket API
-   * it sents autoConnect to false, so even if you have enabled it in your connect method it will not reconnect automatically.
-   */
-  disconnect(): void {
-    if (this.webSocketSubject != undefined) {
-      this.autoReconnect = false; //We disable autoreconnect if we disconnect due to user will
-      this.webSocketSubject.unsubscribe();
+        //if it's the response to our QUERY action sent during the authentication flow the 'authenticated' event should be emitted
+        if (
+          decryptedPayload.response.type == 'QUERY' &&
+          this.waitingForAuthenticationQueryActionResponse == true
+        ) {
+          this.waitingForAuthenticationQueryActionResponse = false;
+          this.deviceConfig.authenticatedObserver?.next(decryptedPayload);
+        }
+      }
+    } else {
+      this.deviceConfig.errorObserver?.error('Authentication or encryption error');
     }
   }
 
@@ -296,9 +154,9 @@ export class RemootioDevice extends EventEmitter {
    * }
    */
   sendFrame(frameJson: SentFrames): void {
-    if (this.webSocketSubject != undefined && !this.webSocketSubject) {
-      // this.webSocketSubject.next(JSON.stringify(frameJson));
-      this.emit('outgoingmessage', frameJson, undefined);
+    if (this.webSocketSubject != undefined && !this.webSocketSubject.closed) {
+      this.webSocketSubject.next(frameJson);
+      // this.emit('outgoingmessage', frameJson, undefined);
     } else {
       console.warn('The websocket client is not connected');
     }
@@ -315,23 +173,23 @@ export class RemootioDevice extends EventEmitter {
    * } where lastActionId must be an increment modulo 0x7FFFFFFF of the last action id (you can get this using the lastActionId property of the RemootioDevice class)
    */
   sendEncryptedFrame(unencryptedPayload: RemootioAction): void {
-    // if (this.webSocketSubject != undefined && this.webSocketSubject.readyState == WebSocket.OPEN) {
-    //   if (this.apiSessionKey != undefined) {
-    //     //Upon connecting, send the AUTH frame immediately to authenticate the session
-    //     const encryptedFrame = apicrypto.remootioApiConstructEncrypedFrame(
-    //       JSON.stringify(unencryptedPayload),
-    //       this.apiSecretKey,
-    //       this.apiAuthKey,
-    //       this.apiSessionKey
-    //     );
-    //     this.webSocketSubject.send(JSON.stringify(encryptedFrame));
-    //     this.emit('outgoingmessage', encryptedFrame, unencryptedPayload);
-    //   } else {
-    //     console.warn('Authenticate session first to send this message');
-    //   }
-    // } else {
-    //   console.warn('The websocket client is not connected');
-    // }
+    if (this.webSocketSubject != undefined && !this.webSocketSubject.closed) {
+      if (this.apiSessionKey != undefined) {
+        //Upon connecting, send the AUTH frame immediately to authenticate the session
+        const encryptedFrame = apicrypto.remootioApiConstructEncrypedFrame(
+          JSON.stringify(unencryptedPayload),
+          this.deviceConfig.apiSecretKey,
+          this.deviceConfig.apiAuthKey,
+          this.apiSessionKey
+        );
+        this.webSocketSubject.next(encryptedFrame);
+        // this.emit('outgoingmessage', encryptedFrame, unencryptedPayload);
+      } else {
+        console.warn('Authenticate session first to send this message');
+      }
+    } else {
+      console.warn('The websocket client is not connected');
+    }
   }
 
   /**

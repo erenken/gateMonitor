@@ -8,7 +8,7 @@ import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
 })
 export class HomeComponent implements OnInit {
 
-  private gateImage: string = "";
+  private gateImage: string = "http://192.168.4.131/snap.jpeg";
 
   constructor(private remootioService: mynocRemootioAngularService) { }
 
@@ -25,6 +25,9 @@ export class HomeComponent implements OnInit {
     return this.remootioService.isGateOpen;
   }
 
+  get isAuthenticated(): boolean {
+    return this.remootioService.isAuthenticated;
+  }
 
   getGateStatus(): string {
     return this.remootioService.gateStatusDescription();

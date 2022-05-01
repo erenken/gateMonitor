@@ -1,4 +1,4 @@
-<mat-card>
+<mat-card *ngIf="isAuthenticated">
   <mat-card-title>Status</mat-card-title>
   <mat-card-content [ngClass]="{'opened': isGateOpen, 'closed': !isGateOpen}"><div>{{ getGateStatus() }}</div></mat-card-content>
 </mat-card>
