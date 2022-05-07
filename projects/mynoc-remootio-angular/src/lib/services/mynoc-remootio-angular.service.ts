@@ -1,92 +1,67 @@
 import { Injectable } from '@angular/core';
+import { Subject } from 'rxjs';
+import { IConnectionStatus, IGateState, IRemootioDeviceConfig } from './remootioInterfaces';
 import { RemootioDevice } from './remootioDevice';
-import { IRemootioDeviceConfig } from './remootioDeviceConfig';
-import { ReceivedEncryptedFrameContent, ReceivedFrames, RemootioActionResponse } from './remootioFrames';
+import { RemootioActionResponse } from './remootioFrames';
 
 @Injectable({
   providedIn: 'root'
 })
 export class mynocRemootioAngularService {
 
-  private _isGateOpen: boolean = false;
-  private _isAuthenticated: boolean = false;
+  private remootioDevice?: RemootioDevice;
+  private authenticated: boolean = false;
 
-  private _remootioDevice?: RemootioDevice;
+  public connectionChanged$ = new Subject<boolean>();
+  public messages$ = new Subject<RemootioActionResponse>();
+  public errors$ = new Subject<string>();
+  public gateState$ = new Subject<IGateState>();
 
-  constructor( ) {
+  constructor() {
   }
 
   public connect(remootioDeviceConfig: IRemootioDeviceConfig) {
-    if (this._remootioDevice && this._remootioDevice.isConnected) return;
+    if (this.remootioDevice && this.remootioDevice.isConnected) return;
 
-    this._remootioDevice = new RemootioDevice(remootioDeviceConfig);
+    this.remootioDevice = new RemootioDevice(remootioDeviceConfig);
+
+    this.remootioDevice.connectionChanged$.subscribe(connection => this.connectionChanged(connection));
+    this.remootioDevice.messages$.subscribe(message => this.processMessage(message));
+    this.remootioDevice.errors$.subscribe(error => this.error(error));
 
     var autoReconnect = true;
     if (remootioDeviceConfig.autoReconnect) autoReconnect = remootioDeviceConfig.autoReconnect;
 
-    if (!remootioDeviceConfig.openObserver) {
-      remootioDeviceConfig.openObserver = {
-        next: (event) => this.connected(event)
-      }
-    }
-
-    if (!remootioDeviceConfig.authenticatedObserver) {
-      remootioDeviceConfig.authenticatedObserver = {
-        next: (event) => this.authenticated(event)
-      }
-    }
-
-    if (!remootioDeviceConfig.errorObserver) {
-      remootioDeviceConfig.errorObserver = {
-        error: (event) => this.error(event)
-      }
-    }
-
-    if (!remootioDeviceConfig.messageObserver) {
-      remootioDeviceConfig.messageObserver = {
-        next: (message) => this.incomingMessage(message)
-      }
-    }
-
-    this._remootioDevice.connect();
+    this.remootioDevice.connect();
   }
 
-  public incomingMessage(message: RemootioActionResponse) {
+  private connectionChanged(connection: IConnectionStatus): void {
+    if (connection.connected && !connection.authenticated) this.remootioDevice?.authenticate();
+    if (connection.connected && connection.authenticated) this.remootioDevice?.sendQuery();
+
+    this.authenticated = connection.authenticated;
+    this.connectionChanged$.next(connection.connected);
+  }
+
+  private processMessage(message: RemootioActionResponse): void {
     if (message.response.type === 'QUERY') {
-      this.isGateOpen = message.response.state === 'open';
+      var isOpen = message.response.state === 'open';
+      var gateState: IGateState = {
+        isOpen: isOpen,
+        description: isOpen ? "Open" : "Closed"
+      }
+
+      this.gateState$.next(gateState);
     }
   }
 
-  public error(error: string)
+  private error(error: string)
   {
     console.log(error);
-  }
-
-  public connected(event: Event)
-  {
-    this._remootioDevice!.authenticate();
-  }
-
-  public authenticated(event: ReceivedEncryptedFrameContent)
-  {
-    this._isAuthenticated = true;
-    this._remootioDevice!.sendQuery();
+    this.errors$.next(error);
   }
 
   public get isAuthenticated(): boolean {
-    return this._isAuthenticated;
-  }
-
-  public set isGateOpen(value: boolean) {
-    this._isGateOpen = value;
-  }
-
-  public get isGateOpen(): boolean {
-    return this._isGateOpen;
-  }
-
-  public gateStatusDescription(): string {
-    if (this.isGateOpen) return "Open";
-    return "Closed";
+    return this.authenticated;
   }
 }

@@ -2,10 +2,10 @@
 * Converted from remootio node library (https://github.com/remootio/remootio-api-client-node/blob/master/src/index.ts
 */
 
-import { AnonymousSubject } from 'rxjs/internal/Subject';
+import { AnonymousSubject, Subject } from 'rxjs/internal/Subject';
 import { WebSocketSubject } from 'rxjs/webSocket';
 import * as apicrypto from './remootioApiCrypto';
-import { IRemootioDeviceConfig } from './remootioDeviceConfig';
+import { IConnectionStatus, IRemootioDeviceConfig } from './remootioInterfaces';
 import { EncryptedFrame, ReceivedFrames, RemootioAction, RemootioActionResponse, SentFrames } from './remootioFrames';
 
 export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames | undefined> {
@@ -13,6 +13,10 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
   private apiSessionKey?: string;
   private lastActionId?: number;
   private waitingForAuthenticationQueryActionResponse?: boolean;
+
+  public connectionChanged$ = new Subject<IConnectionStatus>();
+  public messages$ = new Subject<RemootioActionResponse>();
+  public errors$ = new Subject<string>();
 
   constructor(private deviceConfig: IRemootioDeviceConfig) {
     super();
@@ -67,12 +71,18 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
     this.apiSessionKey = undefined;
     this.lastActionId = undefined;
 
-    this.deviceConfig.openObserver?.next(event);
+    this.connectionChanged$.next({
+      connected: true,
+      authenticated: false
+    });
   }
 
   private closeObserver(event: CloseEvent)
   {
-    this.deviceConfig.closeObserver?.next(event);
+    this.connectionChanged$.next({
+      connected: false,
+      authenticated: false
+    });
   }
 
   private dataReceived(data: ReceivedFrames)
@@ -115,7 +125,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
         this.waitingForAuthenticationQueryActionResponse = true;
         this.sendQuery();
       } else {
-        this.deviceConfig.messageObserver?.next(decryptedPayload as RemootioActionResponse);
+        this.messages$.next(decryptedPayload as RemootioActionResponse);
       }
 
       if ('response' in decryptedPayload && decryptedPayload.response.id != undefined) {
@@ -129,7 +139,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
             this.lastActionId = decryptedPayload.response.id; //We update the lastActionId
           }
         } else {
-          this.deviceConfig.errorObserver?.error('Unexpected error - lastActionId is undefined');
+          this.errors$.error('Unexpected error - lastActionId is undefined');
         }
 
         //if it's the response to our QUERY action sent during the authentication flow the 'authenticated' event should be emitted
@@ -138,11 +148,14 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
           this.waitingForAuthenticationQueryActionResponse == true
         ) {
           this.waitingForAuthenticationQueryActionResponse = false;
-          this.deviceConfig.authenticatedObserver?.next(decryptedPayload);
+          this.connectionChanged$.next({
+            connected: true,
+            authenticated: true
+          });
         }
       }
     } else {
-      this.deviceConfig.errorObserver?.error('Authentication or encryption error');
+      this.errors$.next('Authentication or encryption error');
     }
   }
 

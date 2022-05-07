@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
+import { IGateState } from 'dist/mynoc-remootio-angular/lib/services/remootioInterfaces';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -7,10 +9,16 @@ import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-
   private gateImage: string = "http://192.168.4.131/snap.jpeg";
+  private gateStateField: IGateState = { isOpen: false, description: '' };
+  public gateState$ = new Subject<IGateState>();
 
-  constructor(private remootioService: mynocRemootioAngularService) { }
+  constructor(private remootioService: mynocRemootioAngularService) {
+    remootioService.gateState$.subscribe(gateState => {
+      this.gateStateField = gateState;
+      this.gateState$.next(gateState);
+    });
+  }
 
   ngOnInit(): void {
     this.remootioService.connect({
@@ -19,21 +27,19 @@ export class HomeComponent implements OnInit {
       apiAuthKey: '1CBB43A809BDED61F2B8A5C9F3B9A721883057C51688A5899E1417EB0D9CA135',
       autoReconnect: true
     });
+
+    setInterval(() => this.gateImage = this.gateImage);
   }
 
-  get isGateOpen(): boolean {
-    return this.remootioService.isGateOpen;
-  }
-
-  get isAuthenticated(): boolean {
-    return this.remootioService.isAuthenticated;
-  }
-
-  getGateStatus(): string {
-    return this.remootioService.gateStatusDescription();
+  get gateState(): IGateState {
+    return this.gateStateField;
   }
 
   get gateImageUrl(): string {
     return this.gateImage;
+  }
+
+  get isAuthenticated(): boolean {
+    return this.remootioService.isAuthenticated;
   }
 }
