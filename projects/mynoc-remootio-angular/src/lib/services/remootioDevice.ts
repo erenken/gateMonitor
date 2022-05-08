@@ -6,7 +6,7 @@ import { AnonymousSubject, Subject } from 'rxjs/internal/Subject';
 import { WebSocketSubject } from 'rxjs/webSocket';
 import * as apicrypto from './remootioApiCrypto';
 import { IConnectionStatus, IRemootioDeviceConfig } from './remootioInterfaces';
-import { EncryptedFrame, ReceivedFrames, RemootioAction, RemootioActionResponse, SentFrames } from './remootioFrames';
+import { EncryptedFrame, ReceivedEncryptedFrameContent, ReceivedFrames, RemootioAction, RemootioActionResponse, SentFrames } from './remootioFrames';
 
 export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames | undefined> {
   private webSocketSubject?: WebSocketSubject<ReceivedFrames | SentFrames | undefined>;
@@ -15,7 +15,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
   private waitingForAuthenticationQueryActionResponse?: boolean;
 
   public connectionChanged$ = new Subject<IConnectionStatus>();
-  public messages$ = new Subject<RemootioActionResponse>();
+  public messages$ = new Subject<ReceivedEncryptedFrameContent>();
   public errors$ = new Subject<string>();
 
   constructor(private deviceConfig: IRemootioDeviceConfig) {
@@ -125,7 +125,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
         this.waitingForAuthenticationQueryActionResponse = true;
         this.sendQuery();
       } else {
-        this.messages$.next(decryptedPayload as RemootioActionResponse);
+        this.messages$.next(decryptedPayload);
       }
 
       if ('response' in decryptedPayload && decryptedPayload.response.id != undefined) {
