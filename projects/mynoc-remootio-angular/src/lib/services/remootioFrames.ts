@@ -99,6 +99,10 @@ export interface RemootioActionResponse {
   };
 }
 
+export function isRemootioActionResponse(object: any): boolean {
+  return typeof object.response === 'object';
+}
+
 export type EventTypes =
   | {
       event: {
@@ -160,3 +164,7 @@ export type EventTypes =
         };
       };
     };
+
+    export function isEventType(object: any): boolean {
+      return typeof object.event === 'object';
+    }

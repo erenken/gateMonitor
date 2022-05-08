@@ -8,5 +8,5 @@
 <br />
 <mat-card>
   <mat-card-title>Image</mat-card-title>
-  <mat-card-content><img src="{{ gateImageUrl }}" alt="Gate" class="gateImage" /></mat-card-content>
+  <mat-card-content><img src="{{ gateImage$ | async }}" alt="Gate" class="gateImage" /></mat-card-content>
 </mat-card>

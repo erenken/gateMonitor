@@ -11,13 +11,17 @@ import { Subject } from 'rxjs';
 export class HomeComponent implements OnInit {
   private gateImage: string = "http://192.168.4.131/snap.jpeg";
   private gateStateField: IGateState = { isOpen: false, description: '' };
+
   public gateState$ = new Subject<IGateState>();
+  public gateImage$ = new Subject<string>();
 
   constructor(private remootioService: mynocRemootioAngularService) {
     remootioService.gateState$.subscribe(gateState => {
       this.gateStateField = gateState;
       this.gateState$.next(gateState);
     });
+
+    this.gateImage$.next(this.gateImage);
   }
 
   ngOnInit(): void {
@@ -28,15 +32,11 @@ export class HomeComponent implements OnInit {
       autoReconnect: true
     });
 
-    setInterval(() => this.gateImage = this.gateImage);
+    setInterval(() => this.gateImage$.next(`${this.gateImage}?${Date.now()}`), 1000);
   }
 
   get gateState(): IGateState {
     return this.gateStateField;
-  }
-
-  get gateImageUrl(): string {
-    return this.gateImage;
   }
 
   get isAuthenticated(): boolean {

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { IConnectionStatus, IGateState, IRemootioDeviceConfig } from './remootioInterfaces';
 import { RemootioDevice } from './remootioDevice';
-import { RemootioActionResponse } from './remootioFrames';
+import { EventTypes, isEventType, isRemootioActionResponse, ReceivedEncryptedFrameContent, RemootioActionResponse } from './remootioFrames';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +13,7 @@ export class mynocRemootioAngularService {
   private authenticated: boolean = false;
 
   public connectionChanged$ = new Subject<boolean>();
-  public messages$ = new Subject<RemootioActionResponse>();
+  public messages$ = new Subject<ReceivedEncryptedFrameContent>();
   public errors$ = new Subject<string>();
   public gateState$ = new Subject<IGateState>();
 
@@ -43,16 +43,34 @@ export class mynocRemootioAngularService {
     this.connectionChanged$.next(connection.connected);
   }
 
-  private processMessage(message: RemootioActionResponse): void {
-    if (message.response.type === 'QUERY') {
-      var isOpen = message.response.state === 'open';
-      var gateState: IGateState = {
-        isOpen: isOpen,
-        description: isOpen ? "Open" : "Closed"
-      }
-
-      this.gateState$.next(gateState);
+  private processMessage(message: ReceivedEncryptedFrameContent): void {
+    if (isRemootioActionResponse(message)) {
+      this.processRemootioActionResponse(message as RemootioActionResponse);
+    } else if (isEventType(message)) {
+      this.processEventTypes(message as EventTypes);
     }
+  }
+
+  private processEventTypes(message: EventTypes) {
+    if (message.event.type === 'StateChange') {
+      this.processState(message.event.state);
+    }
+  }
+
+  private processRemootioActionResponse(message: RemootioActionResponse) {
+    if (message.response.type === 'QUERY') {
+      this.processState(message.response.state);
+    }
+  }
+
+  private processState(sensorState: string) {
+    var isOpen = sensorState === 'open';
+    var gateState: IGateState = {
+      isOpen: isOpen,
+      description: isOpen ? "Open" : "Closed"
+    };
+
+    this.gateState$.next(gateState);
   }
 
   private error(error: string)
@@ -65,3 +83,5 @@ export class mynocRemootioAngularService {
     return this.authenticated;
   }
 }
+
+
