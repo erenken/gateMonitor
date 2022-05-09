@@ -35,6 +35,14 @@ export class mynocRemootioAngularService {
     this.remootioDevice.connect();
   }
 
+  public closeGate(): void {
+    this.remootioDevice?.sendClose();
+  }
+
+  public openGate(): void {
+    this.remootioDevice?.sendOpen();
+  }
+
   private connectionChanged(connection: IConnectionStatus): void {
     if (connection.connected && !connection.authenticated) this.remootioDevice?.authenticate();
     if (connection.connected && connection.authenticated) this.remootioDevice?.sendQuery();

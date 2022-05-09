@@ -12,8 +12,23 @@ body {
 .fill-remaining-space {
   flex: 1 1 auto;
 }
+
 .container {
   margin: 2em;
+}
+
+.gateStatus {
+  margin: 5px;
+  padding: 10px;
+  text-align: center;
+  font-size: large;
+  font-weight: bold;
+}
+
+.statusCards {
+  margin: 5px;
+  padding: 10px;
+  text-align: center;
 }
 
 .opened {
@@ -22,9 +37,11 @@ body {
 
 .closed {
   background-color: green;
+
 }
 
 .gateImage {
   height: 50%;
   width: 50%;
 }
+
