@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
-import { IGateState } from 'dist/mynoc-remootio-angular/lib/services/remootioInterfaces';
+import { mynocRemootioAngularService, IGateState } from 'dist/mynoc-remootio-angular';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -24,9 +23,9 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.remootioService.connect({
-      deviceIp: '',
-      apiSecretKey: '',
-      apiAuthKey: '',
+      deviceIp: '192.168.4.235',
+      apiSecretKey: '9F4E4AC0972078EF8F1500EA891DBD84FE03548570BC99524C1FAB17C7EAFE25',
+      apiAuthKey: '1CBB43A809BDED61F2B8A5C9F3B9A721883057C51688A5899E1417EB0D9CA135',
       autoReconnect: true
     });
 

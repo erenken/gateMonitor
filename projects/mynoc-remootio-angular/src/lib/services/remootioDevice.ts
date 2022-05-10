@@ -14,6 +14,10 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
   private lastActionId?: number;
   private waitingForAuthenticationQueryActionResponse?: boolean;
 
+  private pingIntervalXMs: number = 60000;
+  private pingIntervalHandle?: ReturnType<typeof setInterval>;
+  private pingReplyTimeoutHandle?: ReturnType<typeof setTimeout>;
+
   public connectionChanged$ = new Subject<IConnectionStatus>();
   public messages$ = new Subject<ReceivedEncryptedFrameContent>();
   public errors$ = new Subject<string>();
@@ -30,6 +34,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
     if (!hexstringRe.test(deviceConfig.apiAuthKey)) {
       console.error('ApiAuthKey must be a hexstring representing a 256bit long byteArray');
     }
+
     //Set config
     this.webSocketSubject = undefined;
 
@@ -37,8 +42,8 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
     this.apiSessionKey = undefined; //base64 encoded
     this.lastActionId = undefined;
 
-    if (!deviceConfig.sendPingMessageEveryXMs) {
-      deviceConfig.sendPingMessageEveryXMs = 60000; //in ms , send a ping message every PingMessagePeriodicity time, a PONG reply is expected
+    if (deviceConfig.sendPingMessageEveryXMs) {
+      this.pingIntervalXMs = deviceConfig.sendPingMessageEveryXMs;
     }
   }
 
@@ -75,10 +80,30 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
       connected: true,
       authenticated: false
     });
+
+    var pingReplyTimeout = this.pingIntervalXMs / 2;
+    this.pingIntervalHandle = setInterval(() => {
+      if (this.webSocketSubject != undefined && !this.webSocketSubject.closed) {
+        this.pingReplyTimeoutHandle = setTimeout(() => {
+          this.errors$.next(`No response for PING message in ${pingReplyTimeout} ms. Connection is broken.`);
+
+          if (this.webSocketSubject) {
+            this.webSocketSubject?.unsubscribe();
+            this.pingReplyTimeoutHandle = undefined;
+          }
+        }, pingReplyTimeout);
+        this.sendPing();
+      }
+    }, this.pingIntervalXMs);
   }
 
   private closeObserver(event: CloseEvent)
   {
+    if (!this.pingIntervalHandle) {
+      clearInterval(this.pingIntervalHandle);
+      this.pingIntervalHandle = undefined;
+    }
+
     this.connectionChanged$.next({
       connected: false,
       authenticated: false
@@ -87,6 +112,11 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
 
   private dataReceived(data: ReceivedFrames)
   {
+    if (!this.pingReplyTimeoutHandle) {
+      clearTimeout(this.pingReplyTimeoutHandle);
+      this.pingReplyTimeoutHandle = undefined;
+    }
+
     switch (data.type) {
       case "ERROR":
         console.log(data);
