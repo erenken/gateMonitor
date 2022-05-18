@@ -1,0 +1,16 @@
+<mat-card *ngIf="isAuthenticated">
+  <mat-card-title>Status</mat-card-title>
+  <mat-card-content class="statusCards">
+    <div class="gateStatus"
+      [ngClass]="{'opened': (gateState$ | async)?.isOpen, 'closed': !(gateState$ | async)?.isOpen}">
+      {{ (gateState$ | async)?.description }}</div>
+    <button (click)='closeGate()' mat-fab class="closed" [disabled]="!(gateState$ | async)?.isOpen">Close</button>
+    &nbsp;
+    <button (click)='openGate()' mat-fab class="opened" [disabled]="(gateState$ | async)?.isOpen">Open</button>
+  </mat-card-content>
+</mat-card>
+<br />
+<mat-card>
+  <mat-card-title>Gate</mat-card-title>
+  <mat-card-content class="statusCards"><img src="{{ gateImage$ | async }}" alt="Gate" class="gateImage" /></mat-card-content>
+</mat-card>
