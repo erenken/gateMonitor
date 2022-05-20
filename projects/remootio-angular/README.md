@@ -1,4 +1,4 @@
-# myNOC Remootio Angular Service
+# Remootio Angular Service
 
 This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service originally written using Angular 13.3.5.  
 
@@ -8,7 +8,7 @@ I created this service for use in my own project to work with my [Ghost Controls
 
 ## Build
 
-Run `ng build mynoc-remootio-angular` to build the project. The build artifacts will be stored in the `dist/` directory.
+Run `ng build remootio-angular` to build the project. The build artifacts will be stored in the `dist/` directory.
 
 ## Usage
 
@@ -17,7 +17,7 @@ Run `ng build mynoc-remootio-angular` to build the project. The build artifacts 
 Import the module into your app module
 
 ```ts
-import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
+import { mynocRemootioAngularService } from 'dist/remootio-angular';
 
 ...
 

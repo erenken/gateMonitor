@@ -17,8 +17,8 @@
     "moduleResolution": "node",
     "importHelpers": true,
     "paths": {
-      "mynoc-remootio-angular": [
-        "dist/mynoc-remootio-angular"
+      "remootio-angular": [
+        "dist/remootio-angular"
       ]
     },
     "target": "es2017",

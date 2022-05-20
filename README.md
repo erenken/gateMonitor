@@ -8,7 +8,7 @@ I will be running this site on a Raspberry PI with a touch screen.  The goal is 
 
 This was my first attempt at creating my own Observable components that my site could subscribe to and display changes as they happened.  I haven't been using Angular a lot lately, so this was a way for me to experiment and also build something cool.
 
-As part of this I also created an Angular Service [mynoc-remootio-angular](./projects/mynoc-remootio-angular/README.md) as a library, so hopefully other people may also find this useful.  I have not published it yet, but I am thinking I will after I have more of the base methods implemented.
+As part of this I also created an Angular Service [remootio-angular](./projects/remootio-angular/README.md) as a library, so hopefully other people may also find this useful.  I have not published it yet, but I am thinking I will after I have more of the base methods implemented.
 
 ## Website
 

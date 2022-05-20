@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { mynocRemootioAngularService, IGateState } from 'dist/mynoc-remootio-angular';
+import { mynocRemootioAngularService, IGateState } from 'dist/remootio-angular';
 import { Subject } from 'rxjs';
 
 @Component({

@@ -112,23 +112,23 @@
         }
       }
     },
-    "mynoc-remootio-angular": {
+    "remootio-angular": {
       "projectType": "library",
-      "root": "projects/mynoc-remootio-angular",
-      "sourceRoot": "projects/mynoc-remootio-angular/src",
+      "root": "projects/remootio-angular",
+      "sourceRoot": "projects/remootio-angular/src",
       "prefix": "lib",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:ng-packagr",
           "options": {
-            "project": "projects/mynoc-remootio-angular/ng-package.json"
+            "project": "projects/remootio-angular/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/mynoc-remootio-angular/tsconfig.lib.prod.json"
+              "tsConfig": "projects/remootio-angular/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/mynoc-remootio-angular/tsconfig.lib.json"
+              "tsConfig": "projects/remootio-angular/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"
@@ -136,9 +136,9 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "main": "projects/mynoc-remootio-angular/src/test.ts",
-            "tsConfig": "projects/mynoc-remootio-angular/tsconfig.spec.json",
-            "karmaConfig": "projects/mynoc-remootio-angular/karma.conf.js"
+            "main": "projects/remootio-angular/src/test.ts",
+            "tsConfig": "projects/remootio-angular/tsconfig.spec.json",
+            "karmaConfig": "projects/remootio-angular/karma.conf.js"
           }
         }
       }
