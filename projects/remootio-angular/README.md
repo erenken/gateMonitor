@@ -1,4 +1,5 @@
 # Remootio Angular Service
+
 <img src="https://img.shields.io/npm/v/remootio-angular.svg?orange=blue" /> <a href="https://www.npmjs.com/package/remootio-angular">
   <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
 </a>
@@ -9,9 +10,12 @@ This service is a conversion of the [Remootio API Client for Node.js](https://gi
 
 I created this service for use in my own project to work with my [Ghost Controls](https://ghostcontrols.com) gate.
 
-## Build
+## Install
 
-Run `ng build remootio-angular` to build the project. The build artifacts will be stored in the `dist/` directory.
+```bash
+npm install crypto-js --save
+npm install remootio-angular --save
+```
 
 ## Usage
 
@@ -20,12 +24,12 @@ Run `ng build remootio-angular` to build the project. The build artifacts will b
 Import the module into your app module
 
 ```ts
-import { mynocRemootioAngularService } from 'dist/remootio-angular';
+import { RemootioAngularService } from 'remootio-angular';
 
 ...
 
 providers: [
-  mynocRemootioAngularService
+  RemootioAngularService
 ]
 ```
 
@@ -34,7 +38,7 @@ providers: [
 Inject the service into your component's TypeScript constructor and subscribe to state changes.
 
 ```ts
-constructor(private remootioService: mynocRemootioAngularService) { };
+constructor(private remootioService: RemootioAngularService) { };
 ```
 
 ## Example
@@ -48,7 +52,7 @@ public gateState$ = new Subject<IGateState>();
 We wire up the `gateState$` in the constructor.
 
 ```ts
-constructor(private remootioService: mynocRemootioAngularService) {
+constructor(private remootioService: RemootioAngularService) {
   remootioService.gateState$.subscribe(gateState => {
     this.gateState$.next(gateState);
   })
