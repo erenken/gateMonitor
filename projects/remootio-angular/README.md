@@ -1,4 +1,7 @@
 # Remootio Angular Service
+<img src="https://img.shields.io/npm/v/remootio-angular.svg?orange=blue" /> <a href="https://www.npmjs.com/package/remootio-angular">
+  <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
+</a>
 
 This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service originally written using Angular 13.3.5.  
 
