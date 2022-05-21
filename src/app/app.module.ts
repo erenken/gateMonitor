@@ -9,7 +9,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
-import { mynocRemootioAngularService } from 'dist/mynoc-remootio-angular';
+import { mynocRemootioAngularService } from 'dist/remootio-angular';
 import { FooterComponent } from './footer/footer.component';
 
 @NgModule({

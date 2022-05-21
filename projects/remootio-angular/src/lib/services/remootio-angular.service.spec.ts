@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { mynocRemootioAngularService } from './mynoc-remootio-angular.service';
+import { mynocRemootioAngularService } from './remootio-angular.service';
 
 describe('MynocRemootioAngularService', () => {
   let service: mynocRemootioAngularService;
