@@ -4,9 +4,11 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "buildService": "ng build remootio-angular",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "deployService": "ng deploy remootio-angular"
   },
   "private": true,
   "dependencies": {
