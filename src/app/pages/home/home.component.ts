@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { mynocRemootioAngularService, IGateState } from 'dist/remootio-angular';
+import { RemootioAngularService, IGateState } from 'dist/remootio-angular';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -13,7 +13,7 @@ export class HomeComponent implements OnInit {
   public gateState$ = new Subject<IGateState>();
   public gateImage$ = new Subject<string>();
 
-  constructor(private remootioService: mynocRemootioAngularService) {
+  constructor(private remootioService: RemootioAngularService) {
     remootioService.gateState$.subscribe(gateState => {
       this.gateState$.next(gateState);
     });

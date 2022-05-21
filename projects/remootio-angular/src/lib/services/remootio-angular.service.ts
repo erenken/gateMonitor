@@ -7,7 +7,7 @@ import { EventTypes, isEventType, isRemootioActionResponse, ReceivedEncryptedFra
 @Injectable({
   providedIn: 'root'
 })
-export class mynocRemootioAngularService {
+export class RemootioAngularService {
 
   private remootioDevice?: RemootioDevice;
   private authenticated: boolean = false;

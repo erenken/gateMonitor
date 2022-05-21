@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { mynocRemootioAngularService } from './remootio-angular.service';
+import { RemootioAngularService } from './remootio-angular.service';
 
 describe('MynocRemootioAngularService', () => {
-  let service: mynocRemootioAngularService;
+  let service: RemootioAngularService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(mynocRemootioAngularService);
+    service = TestBed.inject(RemootioAngularService);
   });
 
   it('should be created', () => {
