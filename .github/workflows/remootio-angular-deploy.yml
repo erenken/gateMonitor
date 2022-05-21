@@ -16,6 +16,8 @@ jobs:
         with:
           node-version: 16
       - run: npm ci
+      - run: npm install
+      - run: ng build remootio-angular
       - run: npm test
 
   publish-npm:
@@ -27,7 +29,7 @@ jobs:
         with:
           node-version: 16
           registry-url: https://registry.npmjs.org/
-      - run: npm install
+
       - run: ng deploy remootio-angular
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
