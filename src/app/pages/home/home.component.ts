@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  private gateImage: string = "{cameraSnapUrl}";
+  private gateImage: string = "{gateImage}";
 
   public gateState$ = new Subject<IGateState>();
   public gateImage$ = new Subject<string>();
@@ -23,7 +23,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.remootioService.connect({
-      deviceIp: '{remootioDeviceIp}',
+      deviceIp: '{deviceIp}',
       apiSecretKey: '{apiSecretKey}',
       apiAuthKey: '{apiAuthKey}',
       autoReconnect: true

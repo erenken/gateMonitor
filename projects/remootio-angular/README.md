@@ -84,9 +84,9 @@ ngOnInit(): void {
 }
 ```
 
-This will start the WebSocket connection to the Remootio and authenticate.  If you don't specifiy `sendPingMessageEveryXMs` in the `IRemootioDeviceConfig` when calling the `connect` method, it will automatically be set to 60 seconds.  This keeps the connection alive, so you continue to recieve events.
+This will start the WebSocket connection to the Remootio and authenticate.  If you don't specifiy `sendPingMessageEveryXMs` in the `IRemootioDeviceConfig` when calling the `connect` method, it will automatically be set to 60 seconds.  This keeps the connection alive, so you continue to receive events.
 
-You can also Open or Close the gate.  In the HTML above each button is bound to a methond on the `(click)` event.
+You can also Open or Close the gate.  In the HTML above each button is bound to a method on the `(click)` event.
 
 ```ts
 closeGate() {
