@@ -87,7 +87,7 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
         this.pingReplyTimeoutHandle = setTimeout(() => {
           this.errors$.next(`No response for PING message in ${pingReplyTimeout} ms. Connection is broken.`);
 
-          if (this.webSocketSubject) {
+          if (!this.webSocketSubject || (this.webSocketSubject && this.webSocketSubject.closed)) {
             this.webSocketSubject?.unsubscribe();
             this.pingReplyTimeoutHandle = undefined;
           }
