@@ -1,6 +1,6 @@
 # gateMonitor
 
-This is an Angular 13.3.5 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
+This is an Angular 14.2.3 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
 
 Using a [Remootio](https://www.remootio.com/) smart gate contr5oller with my [Ghost Controls](https://ghostcontrols.com) gate.  I was able to convert their [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular and create a small site that gave me what I needed.
 
