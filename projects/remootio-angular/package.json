@@ -21,7 +21,6 @@
     "rxjs": "^7.5.7"
   },
   "dependencies": {
-    "gate-monitor": "file:../..",
     "tslib": "^2.4.1"
   },
   "devDependencies": {
