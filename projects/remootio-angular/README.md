@@ -5,7 +5,7 @@
   <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
 </a>
 
-This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service written using Angular 14.2.3.
+This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service written using Angular 15.0.0.
 
 [Remootio](https://www.remootio.com/) is a smart gate and garage door controller product.  
 

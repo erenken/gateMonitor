@@ -1,6 +1,6 @@
 # gateMonitor
 
-This is an Angular 14.2.3 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
+This is an Angular 15.0.0 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
 
 Using a [Remootio](https://www.remootio.com/) smart gate contr5oller with my [Ghost Controls](https://ghostcontrols.com) gate.  I was able to convert their [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular and create a small site that gave me what I needed.
 
@@ -8,7 +8,7 @@ I will be running this site on a Raspberry PI with a touch screen.  The goal is 
 
 This was my first attempt at creating my own Observable components that my site could subscribe to and display changes as they happened.  I haven't been using Angular a lot lately, so this was a way for me to experiment and also build something cool.
 
-As part of this I also created an Angular Service [remootio-angular](./projects/remootio-angular/README.md) as a library, so hopefully other people may also find this useful.  I have not published it yet, but I am thinking I will after I have more of the base methods implemented.
+As part of this I also created an Angular Service **[remootio-angular](./projects/remootio-angular/README.md)** as a library, so hopefully other people may also find this useful.  I have not published it yet, but I am thinking I will after I have more of the base methods implemented.
 
 ## Website
 
@@ -63,3 +63,29 @@ HTML to display the gate image.
 <img src="{{ gateImage$ | async }}" alt="Gate" class="gateImage" />
 ```
 
+## Run
+
+To run the site you will need Angular 15.0.0 CLI
+
+```bash
+npm install -g @angular/cli
+```
+
+Once that is installed you should run npm install in both the main project and **remootio-angular** project folder.
+
+```bash
+npm install
+npm install --prefix .\projects\remootio-angular\
+```
+
+Once you have ran both the `npm install` commands you need to build the project first.
+
+```bash
+ng build remootio-angular
+```
+
+Once that the **remootio-angular** project is built you can build and run the main Angular project.
+
+```bash
+ng serve -o
+```
