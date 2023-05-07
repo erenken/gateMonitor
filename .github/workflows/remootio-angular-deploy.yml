@@ -10,6 +10,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        working-directory: ./angular
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -24,6 +27,9 @@ jobs:
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        working-directory: ./angular
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
