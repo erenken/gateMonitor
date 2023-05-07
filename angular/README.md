@@ -1,8 +1,8 @@
 # gateMonitor
 
-This is an Angular 15.0.0 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
+This is an Angular 16.0.0 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
 
-Using a [Remootio](https://www.remootio.com/) smart gate contr5oller with my [Ghost Controls](https://ghostcontrols.com) gate.  I was able to convert their [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular and create a small site that gave me what I needed.
+Using a [Remootio](https://www.remootio.com/) smart gate controller with my [Ghost Controls](https://ghostcontrols.com) gate.  I was able to convert their [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular and create a small site that gave me what I needed.
 
 I will be running this site on a Raspberry PI with a touch screen.  The goal is to place this near the door so I can easily check and then close the gate if needed before I let out my dog.
 
@@ -14,16 +14,35 @@ As part of this I also created an Angular Service **[remootio-angular](./project
 
 This is a very basic site with only 1 page and route.  The main page is [home.component.html](./src/app/pages/home/home.component.html).  If you wanted to use this with your own Remootio device and camera you will need to update the [home.component.ts](./src/app/pages/home/home.component.ts) file.
 
-You will need to change the `deviceIp`, `apiSecretKey`, and `apiAuthKey` in the `ngOnInit` method.
+You will need to change the `deviceIp`, `apiSecretKey`, and `apiAuthKey` in the [environment.ts](./src/environments/environment.ts) file.
 
 ```ts
-ngOnInit(): void {
-  this.remootioService.connect({
-    deviceIp: '{remootioDeviceIp}',
-    apiSecretKey: '{apiSecretKey}',
-    apiAuthKey: '{apiAuthKey}',
+export const environment = {
+  production: true,
+  remootioDeviceConfig: {
+    deviceIp: '{deviceIp}',
+    apiSecretKey: '{apiSecret}',
+    apiAuthKey: '{apiAuth}',
     autoReconnect: true
-  });
+  } as IRemootioDeviceConfig,
+  gateImageUrl: '{gateImageUrl}'
+};
+```
+
+For local development you can also setup a `localConfiguration.ts` file.  It will be ignored, but the file should look something like this:
+
+```ts
+import { IRemootioDeviceConfig } from "remootio-angular";
+
+export const localConfiguration = {
+  remootioConfig: {
+    deviceIp: '{deviceIp}',
+    apiSecretKey: '{apiSecret}',
+    apiAuthKey: '{apiAuth}',
+    autoReconnect: true
+  } as IRemootioDeviceConfig,
+  gateImageUrl: '{gateImageUrl}'
+}
 ```
 
 You can get this information from the Remootio application on your mobile device.  It is located under Settings...Websocket API.
@@ -46,7 +65,7 @@ Once the connection to Remootio is made and authenticated the web site will disp
 
 The style sheet can be found in [styles.scss](./src/styles.scss).  The bar is <span style="color:green">Green</span> when the gate is closed or <span style="color:red">Red</span> when open.
 
-To display your own gate image, you will need to change the `gateImage` URL.  To get the proper URL for a snap image from your camera you will need to look at your camera documentation.  I use a [UniFi G4 Instance](https://store.ui.com/collections/unifi-protect/products/camera-g4-instant), so once [enabled](https://jjj.blog/2019/12/get-snap-jpeg-from-unifi-protect-cameras/) the URL is just `https://{cameraIp}/snap.jpeg`.  Your camera will most likely be different.
+To display your own gate image, you will need to change the `gateImageUrl` URL also located in the [environment.ts](./src/environments/environment.ts) file.  To get the proper URL for a snap image from your camera you will need to look at your camera documentation.  I use a [UniFi G5 Flex](https://store.ui.com/collections/unifi-protect/products/uvc-g5-flex), so once [enabled](https://jjj.blog/2019/12/get-snap-jpeg-from-unifi-protect-cameras/) the URL is just `https://{cameraIp}/snap.jpeg`.  Your camera will most likely have a different URL.
 
 ```ts
 private gateImage: string = "{cameraSnapUrl}";
@@ -65,7 +84,7 @@ HTML to display the gate image.
 
 ## Run
 
-To run the site you will need Angular 15.0.0 CLI
+To run the site you will need Angular 16.0.0 CLI
 
 ```bash
 npm install -g @angular/cli

@@ -2,8 +2,12 @@
 // `ng build` replaces `environment.ts` with `environment.prod.ts`.
 // The list of file replacements can be found in `angular.json`.
 
+import { localConfiguration } from "./localConfiguration";
+
 export const environment = {
-  production: false
+  production: false,
+  remootioDeviceConfig: localConfiguration.remootioConfig,
+  gateImageUrl: localConfiguration.gateImage
 };
 
 /*

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { RemootioAngularService, IGateState } from 'dist/remootio-angular';
 import { Subject } from 'rxjs';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-home',
@@ -8,7 +9,7 @@ import { Subject } from 'rxjs';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent implements OnInit {
-  private gateImage: string = "http://192.168.6.10/snap.jpeg";
+  private gateImage: string = environment.gateImageUrl;
 
   public gateState$ = new Subject<IGateState>();
   public gateImage$ = new Subject<string>();
@@ -22,12 +23,7 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.remootioService.connect({
-      deviceIp: '192.168.4.235',
-      apiSecretKey: '9F4E4AC0972078EF8F1500EA891DBD84FE03548570BC99524C1FAB17C7EAFE25',
-      apiAuthKey: '1CBB43A809BDED61F2B8A5C9F3B9A721883057C51688A5899E1417EB0D9CA135',
-      autoReconnect: true
-    });
+    this.remootioService.connect(environment.remootioDeviceConfig);
 
     setInterval(() => this.gateImage$.next(`${this.gateImage}?${Date.now()}`), 1000);
   }

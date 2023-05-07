@@ -5,7 +5,7 @@
   <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
 </a>
 
-This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service written using Angular 15.0.0.
+This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service written using Angular 16.0.0.
 
 [Remootio](https://www.remootio.com/) is a smart gate and garage door controller product.  
 
@@ -85,7 +85,7 @@ ngOnInit(): void {
 }
 ```
 
-This will start the WebSocket connection to the Remootio and authenticate.  If you don't specifiy `sendPingMessageEveryXMs` in the `IRemootioDeviceConfig` when calling the `connect` method, it will automatically be set to 60 seconds.  This keeps the connection alive, so you continue to receive events.
+This will start the WebSocket connection to the Remootio and authenticate.  If you don't specify `sendPingMessageEveryXMs` in the `IRemootioDeviceConfig` when calling the `connect` method, it will automatically be set to 60 seconds.  This keeps the connection alive, so you continue to receive events.
 
 You can also Open or Close the gate.  In the HTML above each button is bound to a method on the `(click)` event.
 
@@ -101,7 +101,7 @@ openGate() {
 
 Each method calls its corresponding action in the `remootioService`.
 
-The last part is the `*ngIf="isAuthenticated"` in the outside `<div>`.  This is here so the buttons don't show up unless we have an authenticated connection to the Remootio device.  You can expose this in your components TypeScipt.
+The last part is the `*ngIf="isAuthenticated"` in the outside `<div>`.  This is here so the buttons don't show up unless we have an authenticated connection to the Remootio device.  You can expose this in your components TypeScript.
 
 ```ts
 get isAuthenticated(): boolean {
