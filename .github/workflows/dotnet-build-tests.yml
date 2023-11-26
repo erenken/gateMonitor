@@ -8,9 +8,7 @@ on:
 jobs:
   dotnet-build-test:
     runs-on: ubuntu-latest
-    defaults: 
-      run: 
-        working-directory: ./dotnet
+
     steps:
     - uses: actions/checkout@v2
 
@@ -23,12 +21,12 @@ jobs:
       run: dotnet restore .\dotNet
 
     - name: Build
-      run: dotnet build .\dotNet --no-restore
+      run: dotnet build ./dotNet --no-restore
 
     - name: Test
-      run: dotnet test .\dotNet --no-restore --verbosity normal --logger trx --collect:"XPlat Code Coverage" --no-build
+      run: dotnet test ./dotNet --no-restore --verbosity normal --logger trx --collect:"XPlat Code Coverage" --no-build
     
     - name: Test Pack nuget
       run: |
-         dotnet pack .\dotNet --no-build --no-restore --include-symbols --verbosity normal 
+         dotnet pack ./dotNet --no-build --no-restore --include-symbols --verbosity normal 
       
