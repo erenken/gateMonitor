@@ -17,8 +17,11 @@ jobs:
       with:
         dotnet-version: 8.x
 
+    - name: Restore Workloads
+      run: dotnet workload restore ./dotNet/src/myNOC.Remootio/myNOC.Remootio.csproj
+
     - name: Install dependencies
-      run: dotnet restore ./dotNet
+      run: dotnet restore ./dotNet/
 
     - name: Build
       run: dotnet build ./dotNet --no-restore
