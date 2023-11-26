@@ -53,6 +53,23 @@ export class RemootioDevice extends AnonymousSubject<ReceivedFrames | SentFrames
     this.lastActionId = undefined;
     this.waitingForAuthenticationQueryActionResponse = undefined;
 
+
+    debugger;
+    apicrypto.remootioApiDecryptEncrypedFrame(
+      {
+        "type": "ENCRYPTED",
+          "data": {
+          "iv": "Hq9x+BpPdA+WV2ZMqPMa4Q==",
+              "payload": "Ra1QHCP36Un6csyB7iY/SQRqpUMFWlTISWNjYo+zg0T3w46mXsn1uyOVA7PJTulPSvJlMuydwnnDWOmrPsI6PU4mK/+W2rET+yvQLLtsHmOXOTAMz4B3gWt7NYUi7QMID5oKrALLKScQqxkg6dy1r1q014S8DQ+qcIq3a6xiTvzH4LlFT2ba0TC6MYUzry6Q"
+      
+        },
+          "mac": "zch/Gk9WQ2Aucmrw5yxMOUgIgl5VqZW1lOORmXSJ5t8="
+      },
+      "",
+      "C820B653BE965491F32BDBC721322E5A35BD0165A8BEC5318D10E558AC9728E5",
+      "1f42LOneZEa3vzAnsMIPewmvHOJ6HobEPr05XEfvdTA="
+    );
+
     //We connect to the API
     this.webSocketSubject = new WebSocketSubject<ReceivedFrames | SentFrames | undefined>({
       url: `ws://${this.deviceConfig.deviceIp}:8080/`,

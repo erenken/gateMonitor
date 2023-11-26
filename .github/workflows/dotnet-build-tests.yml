@@ -1,0 +1,34 @@
+name: dotNet Build and Test
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  dotnet-build-test:
+    runs-on: ubuntu-latest
+    defaults: 
+      run: 
+        working-directory: ./dotnet
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 7.x
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      run: dotnet test --no-restore --verbosity normal --logger trx --collect:"XPlat Code Coverage" --no-build
+    
+    - name: Test Pack nuget
+      run: |
+         dotnet pack --no-build --no-restore --include-symbols --verbosity normal 
+      
