@@ -13,17 +13,18 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "importHelpers": true,
+    "ignoreDeprecations": "6.0",
     "paths": {
       "remootio-angular": [
         "dist/remootio-angular"
       ]
     },
     "target": "ES2022",
-    "module": "es2020",
+    "module": "ES2022",
     "lib": [
-      "es2020",
+      "ES2022",
       "dom"
     ],
     "useDefineForClassFields": false
