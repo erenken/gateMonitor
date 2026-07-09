@@ -6,7 +6,7 @@ This repository contains two equivalent front-end dashboards for a Remootio-cont
 
 | Subtree | Stack | Description |
 |---------|-------|-------------|
-| `angular/` | Angular 15 + RxJS | Original dashboard + remootio-angular NPM library |
+| `angular/` | Angular 22 + RxJS | Original dashboard + remootio-angular NPM library |
 | `dotnet/GateMonitor.Blazor` | Blazor WASM (.NET 10) | Blazor equivalent dashboard |
 | `dotnet/myNOC.Remootio` | .NET 8/10 library | Remootio protocol → NuGet: myNOC.Remootio |
 | `dotnet/GateMonitor.AppHost` | .NET Aspire | Dev orchestrator for the Blazor app |
@@ -51,12 +51,13 @@ Do not move low-level protocol logic into UI components in either codebase.
 
 - Angular: `npm test` in `angular/`
 - .NET: `dotnet test dotnet/GateMonitor.slnx`
-- Both run automatically in `dotnet-build.yml` on PRs.
+- Both run automatically in `pr-build-test.yml` on PRs.
 
 ## Documentation Expectations
 
 If behavior changes, update:
 - `README.md` (repo overview)
+- `angular/README.md` (Angular dashboard)
 - `angular/projects/remootio-angular/README.md` (Angular library)
 - `dotnet/myNOC.Remootio/README.md` (.NET library)
 

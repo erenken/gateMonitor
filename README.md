@@ -6,7 +6,7 @@ The repo ships **two equivalent front-end implementations** and **one shared .NE
 
 | Project | Stack | Description |
 |---------|-------|-------------|
-| `angular/` | Angular 15 + RxJS | Original dashboard — runs in the browser, connects to the Remootio device WebSocket directly |
+| `angular/` | Angular 22 + RxJS | Original dashboard — runs in the browser, connects to the Remootio device WebSocket directly |
 | `dotnet/GateMonitor.Blazor` | Blazor WebAssembly (.NET 10) | Equivalent SPA — same direct WebSocket approach, orchestrated by Aspire |
 | `dotnet/myNOC.Remootio` | .NET 8 / 10 class library | Remootio protocol implementation — also published as a NuGet package |
 
@@ -168,26 +168,27 @@ HTML to display the gate image.
 
 ## Run
 
-To run the site you will need Angular 15.0.0 CLI
+To run the site you will need Angular 22 CLI
 
 ```bash
 npm install -g @angular/cli
 ```
 
-Once that is installed you should run npm install in both the main project and **remootio-angular** project folder.
+Once that is installed you should run npm install in the angular folder.
 
 ```bash
+cd angular
 npm install
-npm install --prefix .\projects\remootio-angular\
 ```
 
-Once you have ran both the `npm install` commands you need to build the project first.
+Once you have ran `npm install`, build the remootio-angular library:
 
 ```bash
+cd angular
 ng build remootio-angular
 ```
 
-Once that the **remootio-angular** project is built you can build and run the main Angular project.
+Then build and run the main Angular project:
 
 ```bash
 ng serve -o
