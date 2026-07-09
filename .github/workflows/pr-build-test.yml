@@ -1,0 +1,88 @@
+name: PR Build and Test
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  dotnet-build-test:
+    name: .NET Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.x
+          10.x
+
+    - name: Restore .NET dependencies
+      run: dotnet restore dotnet/GateMonitor.slnx
+
+    - name: Build .NET solution
+      run: dotnet build dotnet/GateMonitor.slnx --configuration Release --no-restore
+
+    - name: Run .NET tests
+      run: dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+    - name: Publish test results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: .NET Test Results
+        path: '**/test-results.trx'
+        reporter: dotnet-trx
+        fail-on-error: true
+
+  angular-build-test:
+    name: Angular Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./angular
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: angular/package-lock.json
+
+    - name: Install Angular dependencies
+      run: npm ci
+
+    - name: Build Angular app
+      run: npm run build --if-present
+
+    - name: Run Angular tests
+      run: npm test -- --watch=false --browsers=ChromeHeadless
+
+    - name: Lint Angular code
+      run: npm run lint --if-present
+      continue-on-error: true
+
+  status-check:
+    name: All Checks Passed
+    runs-on: ubuntu-latest
+    needs: [dotnet-build-test, angular-build-test]
+    if: always()
+
+    steps:
+    - name: Check build status
+      run: |
+        if [ "${{ needs.dotnet-build-test.result }}" != "success" ] || [ "${{ needs.angular-build-test.result }}" != "success" ]; then
+          echo "One or more jobs failed"
+          exit 1
+        fi
+        echo "All checks passed successfully!"
