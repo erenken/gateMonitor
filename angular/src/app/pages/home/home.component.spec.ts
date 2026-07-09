@@ -31,8 +31,7 @@ describe('HomeComponent', () => {
       ],
       providers: [
         { provide: RemootioAngularService, useValue: mockRemootioService }
-      ],
-      declarations: [ HomeComponent ]
+      ]
     })
     .compileComponents();
   });
