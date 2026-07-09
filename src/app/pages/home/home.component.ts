@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
-import { RemootioAngularService, IGateState } from 'dist/remootio-angular';
+import { RemootioAngularService, IGateState } from 'remootio-angular';
 import { Subject } from 'rxjs';
 
 @Component({
   selector: 'app-home',
+  standalone: false,
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
