@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      nuGetVersion: ${{ steps.gitversion.outputs.nuGetVersion }}
+      assemblySemVer: ${{ steps.gitversion.outputs.assemblySemVer }}
+      assemblySemFileVer: ${{ steps.gitversion.outputs.assemblySemFileVer }}
+      informationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}
+      preReleaseLabel: ${{ steps.gitversion.outputs.preReleaseLabel }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v3
+      with:
+        versionSpec: '6.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v3
+      with:
+        useConfigFile: true
+
+  deploy-dotnet:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.x
+          10.x
+
+    - name: Restore
+      run: dotnet restore dotnet/GateMonitor.slnx
+
+    - name: Build
+      run: |
+        dotnet build dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-restore /p:Version="${{ needs.version.outputs.assemblySemVer }}" /p:AssemblyVersion="${{ needs.version.outputs.assemblySemVer }}" /p:FileVersion="${{ needs.version.outputs.assemblySemFileVer }}" /p:InformationalVersion="${{ needs.version.outputs.informationalVersion }}" /p:PackageVersion="${{ needs.version.outputs.nuGetVersion }}" /p:ContinuousIntegrationBuild=true
+
+    - name: Pack nuget
+      run: |
+        dotnet pack dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-build --no-restore --include-symbols --output ./.pack --verbosity normal -p:PackageVersion="${{ needs.version.outputs.nuGetVersion }}"
+
+    - name: Nuget Push
+      run: |
+        dotnet nuget push "**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_PUBLISH }} --skip-duplicate
+
+  deploy-angular:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        registry-url: https://registry.npmjs.org/
+
+    - name: Install dependencies
+      run: npm ci
+      working-directory: angular
+
+    - name: Install library dependencies
+      run: npm install
+      working-directory: angular
+
+    - name: Set library version
+      run: npm version ${{ needs.version.outputs.nuGetVersion }} --no-git-tag-version --allow-same-version
+      working-directory: angular/projects/remootio-angular
+
+    - name: Deploy Angular library to NPM
+      run: npm run deployService
+      working-directory: angular
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+
+  tag:
+    needs: [version, deploy-dotnet, deploy-angular]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Create GitHub Release and Tag
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.version.outputs.nuGetVersion }}
+        name: v${{ needs.version.outputs.nuGetVersion }}
+        generate_release_notes: true
+        prerelease: ${{ needs.version.outputs.preReleaseLabel != '' }}
+

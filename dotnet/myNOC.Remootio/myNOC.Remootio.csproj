@@ -1,0 +1,63 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<DebugType>embedded</DebugType>
+		<DebugSymbols>true</DebugSymbols>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+		<PackageId>myNOC.Remootio</PackageId>
+		<Title>myNOC.Remootio</Title>
+		<Authors>myNOC LLC</Authors>
+		<Description>A .NET client library for the Remootio smart gate/garage door controller WebSocket API. Ports the remootio-api-client-node protocol (AES-CBC + HMAC-SHA256 encryption, auth flow, state events) to C#.</Description>
+		<PackageTags>remootio;iot;gate;garage;websocket;blazor;smarthome</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<Copyright>Copyright © myNOC LLC 2026</Copyright>
+		<AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\" />
+		<None Include="LICENSE.txt" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<!-- Allow the test project to access internal types (RemootioApiCrypto) -->
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>myNOC.Tests.Remootio</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<!-- GitVersion sets $(Version), $(AssemblyVersion), $(InformationalVersion) from git tags -->
+	<ItemGroup>
+		<PackageReference Include="GitVersion.MsBuild" Version="6.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.*">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<!-- Runtime dependencies exposed to consumers of this package -->
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.*" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.*" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="8.*" />
+	</ItemGroup>
+
+</Project>

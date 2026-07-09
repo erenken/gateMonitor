@@ -1,32 +1,135 @@
-# gateMonitor
+# GateMonitor
 
-This is an Angular 15.0.0 project I created so I could easily check the state of the gate at the end of my driveway.  I wanted to be able to easily see if the gate was open or closed and see an image from the camera at the gate before I let out my dog.  
+A local NOC dashboard for checking and controlling a driveway gate via a [Remootio](https://remootio.com) smart gate controller connected to a [Ghost Controls](https://ghostcontrols.com) gate system.
 
-Using a [Remootio](https://www.remootio.com/) smart gate contr5oller with my [Ghost Controls](https://ghostcontrols.com) gate.  I was able to convert their [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular and create a small site that gave me what I needed.
+The repo ships **two equivalent front-end implementations** and **one shared .NET library**:
 
-I will be running this site on a Raspberry PI with a touch screen.  The goal is to place this near the door so I can easily check and then close the gate if needed before I let out my dog.
+| Project | Stack | Description |
+|---------|-------|-------------|
+| `angular/` | Angular 15 + RxJS | Original dashboard — runs in the browser, connects to the Remootio device WebSocket directly |
+| `dotnet/GateMonitor.Blazor` | Blazor WebAssembly (.NET 10) | Equivalent SPA — same direct WebSocket approach, orchestrated by Aspire |
+| `dotnet/myNOC.Remootio` | .NET 8 / 10 class library | Remootio protocol implementation — also published as a NuGet package |
 
-This was my first attempt at creating my own Observable components that my site could subscribe to and display changes as they happened.  I haven't been using Angular a lot lately, so this was a way for me to experiment and also build something cool.
+---
 
-As part of this I also created an Angular Service **[remootio-angular](./projects/remootio-angular/README.md)** as a library, so hopefully other people may also find this useful.  I have not published it yet, but I am thinking I will after I have more of the base methods implemented.
+## Repository Structure
 
-## Website
-
-This is a very basic site with only 1 page and route.  The main page is [home.component.html](./src/app/pages/home/home.component.html).  If you wanted to use this with your own Remootio device and camera you will need to update the [home.component.ts](./src/app/pages/home/home.component.ts) file.
-
-You will need to change the `deviceIp`, `apiSecretKey`, and `apiAuthKey` in the `ngOnInit` method.
-
-```ts
-ngOnInit(): void {
-  this.remootioService.connect({
-    deviceIp: '{remootioDeviceIp}',
-    apiSecretKey: '{apiSecretKey}',
-    apiAuthKey: '{apiAuthKey}',
-    autoReconnect: true
-  });
+```
+gateMonitor/
+├── angular/                         # Angular dashboard app + remootio-angular NPM library
+│   ├── src/                         # App UI (home component, routing)
+│   └── projects/remootio-angular/   # Angular library (Remootio WebSocket client)
+├── dotnet/
+│   ├── GateMonitor.AppHost/         # .NET Aspire orchestrator (dev launcher)
+│   ├── GateMonitor.Blazor/          # Blazor WASM dashboard
+│   ├── myNOC.Remootio/              # Remootio library → NuGet: myNOC.Remootio
+│   ├── tests/
+│   │   ├── myNOC.Tests.Remootio/    # MSTest unit tests for the library
+│   │   └── GateMonitor.Tests.Blazor/# bUnit component tests for the Blazor app
+│   └── GateMonitor.slnx             # .NET solution (SLNX format)
+└── .github/
+    ├── workflows/
+    │   ├── dotnet-build.yml         # PR: build + test (.NET & Angular)
+    │   └── dotnet-release.yml       # Main: NuGet + NPM publish + tag
+    └── instructions/                # Copilot architecture guidance
 ```
 
-You can get this information from the Remootio application on your mobile device.  It is located under Settings...Websocket API.
+---
+
+## Angular App
+
+The Angular app connects directly from the browser to the Remootio device WebSocket (`ws://{deviceIp}:8080/`), authenticates, and subscribes to gate state events.
+
+### Setup
+
+```bash
+cd angular
+npm install
+npm install --prefix ./projects/remootio-angular/
+ng build remootio-angular
+ng serve -o
+```
+
+### Configuration
+
+Edit `angular/src/app/pages/home/home.component.ts` and replace the placeholders:
+
+```ts
+this.remootioService.connect({
+  deviceIp: '{remootioDeviceIp}',
+  apiSecretKey: '{apiSecretKey}',   // 64-char hex — from Remootio app
+  apiAuthKey: '{apiAuthKey}',        // 64-char hex — from Remootio app
+  autoReconnect: true
+});
+```
+
+The gate image URL placeholder is also in that file. Keys are found in the Remootio mobile app under **Settings → WebSocket API**.
+
+---
+
+## Blazor WASM App
+
+The Blazor app is a standalone WebAssembly SPA that also connects directly from the browser to the Remootio device. It uses the `myNOC.Remootio` library.
+
+### Run with Aspire (recommended)
+
+```bash
+cd dotnet
+dotnet run --project GateMonitor.AppHost
+```
+
+This launches the Aspire dashboard and starts the Blazor dev server. Open the Aspire dashboard URL to navigate to the app.
+
+### Run standalone
+
+```bash
+cd dotnet
+dotnet run --project GateMonitor.Blazor
+# opens http://localhost:5122
+```
+
+### Configuration
+
+Edit `dotnet/GateMonitor.Blazor/wwwroot/appsettings.json`:
+
+```json
+{
+  "Remootio": {
+    "DeviceIp": "192.168.1.50",
+    "ApiSecretKey": "<64-char hex>",
+    "ApiAuthKey": "<64-char hex>",
+    "AutoReconnect": true,
+    "GateImageUrl": "http://192.168.1.51/snapshot.jpg"
+  }
+}
+```
+
+> **Note:** `wwwroot/appsettings.json` is served as a public static file. Do not commit real credentials — use `appsettings.Development.json` (git-ignored) or environment-local overrides.
+
+---
+
+## myNOC.Remootio Library
+
+A .NET port of the [remootio-api-client-node](https://github.com/remootio/remootio-api-client-node) library. Handles AES-CBC + HMAC-SHA256 encryption, the authentication challenge/response flow, and real-time state change events.
+
+See [dotnet/myNOC.Remootio/README.md](dotnet/myNOC.Remootio/README.md) for full API documentation.
+
+**Install:**
+```bash
+dotnet add package myNOC.Remootio
+```
+
+---
+
+## CI/CD
+
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `dotnet-build.yml` | PR → main | GitVersion, .NET build + test, Angular build |
+| `dotnet-release.yml` | Push → main | GitVersion, NuGet push, NPM publish, git tag + GitHub release |
+
+**Required secrets:** `NUGET_PUBLISH`, `npm_token`
+
 
 Once the connection to Remootio is made and authenticated the web site will display a bar indicating if the gate is open or closed and 2 buttons.  One to Open and one to Close the gate.
 

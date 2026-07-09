@@ -1,0 +1,88 @@
+﻿@page "/"
+@inject IRemootioService RemootioService
+@inject IConfiguration Configuration
+@implements IDisposable
+
+<PageTitle>Gate Monitor</PageTitle>
+
+@if (!RemootioService.IsAuthenticated)
+{
+    <div class="alert alert-info" role="status">
+        Connecting to gate controller&hellip;
+    </div>
+}
+else
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Status</h5>
+            <div class="gate-status @(RemootioService.CurrentGateState?.IsOpen == true ? "opened" : "closed")">
+                @(RemootioService.CurrentGateState?.Description ?? "Unknown")
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-danger me-2"
+                        @onclick="CloseGate"
+                        disabled="@(!(RemootioService.CurrentGateState?.IsOpen ?? false))">
+                    Close
+                </button>
+                <button class="btn btn-success"
+                        @onclick="OpenGate"
+                        disabled="@(RemootioService.CurrentGateState?.IsOpen ?? true)">
+                    Open
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Gate</h5>
+        @if (!string.IsNullOrEmpty(_gateImageUrl))
+        {
+            <img src="@_gateImageUrl" alt="Gate camera" class="gate-image" />
+        }
+    </div>
+</div>
+
+@code {
+    private string _baseImageUrl = string.Empty;
+    private string _gateImageUrl = string.Empty;
+    private System.Timers.Timer? _imageTimer;
+
+    protected override void OnInitialized()
+    {
+        _baseImageUrl = Configuration["Remootio:GateImageUrl"] ?? string.Empty;
+        _gateImageUrl = _baseImageUrl;
+
+        RemootioService.GateStateChanged += OnGateStateChanged;
+        RemootioService.ConnectionChanged += OnConnectionChanged;
+
+        if (!string.IsNullOrEmpty(_baseImageUrl))
+        {
+            _imageTimer = new System.Timers.Timer(1000);
+            _imageTimer.Elapsed += async (_, _) =>
+            {
+                _gateImageUrl = $"{_baseImageUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+                await InvokeAsync(StateHasChanged);
+            };
+            _imageTimer.Start();
+        }
+    }
+
+    private async void OnGateStateChanged(object? sender, GateState state)
+        => await InvokeAsync(StateHasChanged);
+
+    private async void OnConnectionChanged(object? sender, bool connected)
+        => await InvokeAsync(StateHasChanged);
+
+    private void OpenGate() => RemootioService.OpenGate();
+    private void CloseGate() => RemootioService.CloseGate();
+
+    public void Dispose()
+    {
+        RemootioService.GateStateChanged -= OnGateStateChanged;
+        RemootioService.ConnectionChanged -= OnConnectionChanged;
+        _imageTimer?.Dispose();
+    }
+}

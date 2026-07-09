@@ -1,0 +1,8 @@
+workflow: GitHubFlow/v1
+next-version: 1.0.0
+branches:
+  work:
+    regex: '^work[/-]'
+    label: alpha
+    increment: Minor
+    is-mainline: false
