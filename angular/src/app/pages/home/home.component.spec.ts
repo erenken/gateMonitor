@@ -13,7 +13,6 @@ describe('HomeComponent', () => {
   let mockRemootioService: jasmine.SpyObj<RemootioAngularService>;
 
   beforeEach(async () => {
-    // Create a mock RemootioAngularService
     mockRemootioService = jasmine.createSpyObj('RemootioAngularService', [
       'connect',
       'closeGate',
@@ -32,7 +31,8 @@ describe('HomeComponent', () => {
       ],
       providers: [
         { provide: RemootioAngularService, useValue: mockRemootioService }
-      ]
+      ],
+      declarations: [ HomeComponent ]
     })
     .compileComponents();
   });
