@@ -1,6 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RemootioAngularService } from 'remootio-angular';
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 
 import { HomeComponent } from './home.component';
 
@@ -22,6 +25,11 @@ describe('HomeComponent', () => {
 
     await TestBed.configureTestingModule({
       declarations: [ HomeComponent ],
+      imports: [
+        CommonModule,
+        MatCardModule,
+        MatButtonModule
+      ],
       providers: [
         { provide: RemootioAngularService, useValue: mockRemootioService }
       ]
