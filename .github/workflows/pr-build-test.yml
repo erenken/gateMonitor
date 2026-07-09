@@ -72,6 +72,9 @@ jobs:
     - name: Install Angular dependencies
       run: npm ci
 
+    - name: Build remootio-angular library
+      run: npm run buildService
+
     - name: Build Angular app
       run: npm run build --if-present
 
