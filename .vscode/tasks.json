@@ -5,6 +5,9 @@
     {
       "type": "npm",
       "script": "start",
+      "options": {
+        "cwd": "${workspaceFolder}/angular"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
@@ -23,6 +26,9 @@
     {
       "type": "npm",
       "script": "test",
+      "options": {
+        "cwd": "${workspaceFolder}/angular"
+      },
       "isBackground": true,
       "problemMatcher": {
         "owner": "typescript",
@@ -37,6 +43,29 @@
           }
         }
       }
+    },
+    {
+      "label": "dotnet: build",
+      "type": "shell",
+      "command": "dotnet build",
+      "options": {
+        "cwd": "${workspaceFolder}/dotnet/GateMonitor.Blazor"
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "silent"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "dotnet: watch",
+      "type": "shell",
+      "command": "dotnet watch",
+      "options": {
+        "cwd": "${workspaceFolder}/dotnet/GateMonitor.Blazor"
+      },
+      "isBackground": true,
+      "problemMatcher": "$msCompile"
     }
   ]
 }

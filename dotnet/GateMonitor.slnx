@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="GateMonitor.AppHost/GateMonitor.AppHost.csproj" />
+  <Project Path="GateMonitor.Blazor/GateMonitor.Blazor.csproj" />
+  <Project Path="myNOC.Remootio/myNOC.Remootio.csproj" />
+  <Folder Name="/tests/">
+    <Project Path="tests/GateMonitor.Tests.Blazor/GateMonitor.Tests.Blazor.csproj" />
+    <Project Path="tests/myNOC.Tests.Remootio/myNOC.Tests.Remootio.csproj" />
+  </Folder>
+</Solution>

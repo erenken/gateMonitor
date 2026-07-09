@@ -1,42 +1,83 @@
 # See http://help.github.com/ignore-files/ for more about ignoring files.
 
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+# ─── Angular / Node ──────────────────────────────────────────────────────────
 
-# Node
-**/node_modules
+**/node_modules/
+**/dist/
+**/tmp/
+**/out-tsc/
+**/bazel-out/
+**/.angular/cache/
+**/.sass-cache/
+**/coverage/
+**/typings/
 npm-debug.log
 yarn-error.log
 
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# ─── .NET / Visual Studio ────────────────────────────────────────────────────
 
-# Visual Studio Code
+# Build output
+**/bin/
+**/obj/
+
+# Visual Studio user/workspace files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages (do not commit)
+*.nupkg
+*.snupkg
+.pack/
+**/packages/
+!**/packages/repositories.config
+**/[Pp]ackages/
+
+# Publish profiles
+**/Properties/PublishProfiles/
+
+# Test results
+**/TestResults/
+**/[Tt]est[Rr]esult*/
+
+# Code coverage
+**/coverage.xml
+**/*.coveragexml
+**/*.coverage
+
+# Rider
+.idea/
+**/.idea/
+
+# ─── .NET Aspire ─────────────────────────────────────────────────────────────
+
+# Aspire dashboard manifest (generated at runtime)
+**/aspire-manifest.json
+
+# ─── Secrets / Local config ──────────────────────────────────────────────────
+
+# These files may contain real device IPs, API keys, etc.
+**/appsettings.Development.json
+**/appsettings.*.json
+# Re-allow the base appsettings.json (placeholder values only)
+!**/appsettings.json
+
+# Angular local config overrides
+**/environments/environment.local.ts
+
+# ─── VS Code ─────────────────────────────────────────────────────────────────
+
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.history/*
+.history/
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
+# ─── System ──────────────────────────────────────────────────────────────────
 
-# System files
 .DS_Store
 Thumbs.db
+*.log
