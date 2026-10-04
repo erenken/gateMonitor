@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { AppModule } from '../../app.module';
 import { of } from 'rxjs';
+import { vi } from 'vitest';
 import { RemootioAngularService } from 'remootio-angular';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,21 +12,18 @@ import { HomeComponent } from './home.component';
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
-  let mockRemootioService: jasmine.SpyObj<RemootioAngularService>;
 
   beforeEach(async () => {
-    mockRemootioService = jasmine.createSpyObj('RemootioAngularService', [
-      'connect',
-      'closeGate',
-      'openGate'
-    ], {
+    const mockRemootioService = {
+      connect: vi.fn(),
+      closeGate: vi.fn(),
+      openGate: vi.fn(),
       gateState$: of({ isOpen: false, description: 'Closed' }),
       isAuthenticated: false
-    });
+    };
 
     await TestBed.configureTestingModule({
-      declarations: [ HomeComponent ],
-      imports: [
+      imports: [AppModule,
         CommonModule,
         MatCardModule,
         MatButtonModule

@@ -37,7 +37,7 @@ public class HomeComponentTests
     {
         _service.IsAuthenticated.Returns(false);
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
 
         cut.Find(".alert-info");   // throws AngleSharp.Dom.DomException if not found
     }
@@ -48,7 +48,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = false });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
 
         Assert.AreEqual(0, cut.FindAll(".alert-info").Count);
     }
@@ -59,7 +59,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = true });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
 
         var closeBtn = cut.Find("button.btn-danger");
         var openBtn  = cut.Find("button.btn-success");
@@ -74,7 +74,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = false });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
 
         var openBtn  = cut.Find("button.btn-success");
         var closeBtn = cut.Find("button.btn-danger");
@@ -89,7 +89,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = false });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
 
         Assert.IsTrue(
             cut.Find(".gate-status").TextContent.Contains("Closed"),
@@ -102,7 +102,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = false });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
         cut.Find("button.btn-success").Click();
 
         _service.Received(1).OpenGate();
@@ -114,7 +114,7 @@ public class HomeComponentTests
         _service.IsAuthenticated.Returns(true);
         _service.CurrentGateState.Returns(new GateState { IsOpen = true });
 
-        var cut = _ctx.RenderComponent<Home>();
+        var cut = _ctx.Render<Home>();
         cut.Find("button.btn-danger").Click();
 
         _service.Received(1).CloseGate();

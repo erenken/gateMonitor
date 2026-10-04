@@ -2,114 +2,126 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
+  validate:
+    uses: ./.github/workflows/pr-build-test.yml
+
   version:
+    needs: validate
     runs-on: ubuntu-latest
     outputs:
-      nuGetVersion: ${{ steps.gitversion.outputs.nuGetVersion }}
-      assemblySemVer: ${{ steps.gitversion.outputs.assemblySemVer }}
-      assemblySemFileVer: ${{ steps.gitversion.outputs.assemblySemFileVer }}
-      informationalVersion: ${{ steps.gitversion.outputs.informationalVersion }}
+      semVer: ${{ steps.gitversion.outputs.semVer }}
       preReleaseLabel: ${{ steps.gitversion.outputs.preReleaseLabel }}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
-
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3
+        persist-credentials: false
+    - uses: gittools/actions/gitversion/setup@v4.7.0
       with:
-        versionSpec: '6.x'
-
-    - name: Determine Version
-      id: gitversion
-      uses: gittools/actions/gitversion/execute@v3
+        versionSpec: '6.8.2'
+    - id: gitversion
+      uses: gittools/actions/gitversion/execute@v4.7.0
       with:
-        useConfigFile: true
+        configFilePath: GitVersion.yml
 
   deploy-dotnet:
     needs: version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+        persist-credentials: false
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: |
-          8.x
-          10.x
-
+          8.0.x
+          10.0.x
     - name: Restore
-      run: dotnet restore dotnet/GateMonitor.slnx
-
-    - name: Build
+      run: dotnet restore dotnet/myNOC.Remootio/myNOC.Remootio.csproj -warnaserror
+    - name: Pack NuGet
+      env:
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: dotnet pack dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-restore --include-symbols --output .pack -p:PackageVersion="$PACKAGE_VERSION" -p:ContinuousIntegrationBuild=true -warnaserror
+    - name: Verify SourceLink symbol package
       run: |
-        dotnet build dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-restore /p:Version="${{ needs.version.outputs.assemblySemVer }}" /p:AssemblyVersion="${{ needs.version.outputs.assemblySemVer }}" /p:FileVersion="${{ needs.version.outputs.assemblySemFileVer }}" /p:InformationalVersion="${{ needs.version.outputs.informationalVersion }}" /p:PackageVersion="${{ needs.version.outputs.nuGetVersion }}" /p:ContinuousIntegrationBuild=true
-
-    - name: Pack nuget
-      run: |
-        dotnet pack dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-build --no-restore --include-symbols --output ./.pack --verbosity normal -p:PackageVersion="${{ needs.version.outputs.nuGetVersion }}"
-
-    - name: Nuget Push
-      run: |
-        dotnet nuget push "**/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_PUBLISH }} --skip-duplicate
+        dotnet tool install sourcelink --version 3.1.1 --tool-path .tools
+        unzip -q .pack/*.snupkg -d .pack/symbols
+        .tools/sourcelink test .pack/symbols/lib/net8.0/myNOC.Remootio.pdb
+        .tools/sourcelink test .pack/symbols/lib/net10.0/myNOC.Remootio.pdb
+    - name: Authenticate to NuGet with OIDC
+      id: nuget-login
+      uses: NuGet/login@v1.2.0
+      with:
+        user: erenken
+    - name: Publish NuGet
+      env:
+        NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+      run: dotnet nuget push ".pack/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key "$NUGET_API_KEY" --skip-duplicate
 
   deploy-angular:
     needs: version
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    defaults:
+      run:
+        working-directory: angular
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
-        fetch-depth: 0
-
-    - name: Setup Node
-      uses: actions/setup-node@v4
+        persist-credentials: false
+    - uses: actions/setup-node@v7.0.0
       with:
-        node-version: 24
+        node-version: '26'
         registry-url: https://registry.npmjs.org/
-
+        cache: npm
+        cache-dependency-path: angular/package-lock.json
     - name: Install dependencies
       run: npm ci
-      working-directory: angular
-
-    - name: Install library dependencies
-      run: npm install
-      working-directory: angular
-
     - name: Set library version
-      run: npm version ${{ needs.version.outputs.nuGetVersion }} --no-git-tag-version --allow-same-version
-      working-directory: angular/projects/remootio-angular
-
-    - name: Deploy Angular library to NPM
-      run: npm run deployService
-      working-directory: angular
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.npm_token }}
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: npm run versionService
+    - name: Build Angular library
+      run: npm run buildService
+    - name: Verify npm package version and contents
+      env:
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: |
+        npm run verifyServiceVersion
+        npm pack ./dist/remootio-angular --dry-run
+    - name: Setup npm with trusted publishing support
+      run: npm install --global npm@12.2.0
+    - name: Publish npm with OIDC
+      run: npm publish ./dist/remootio-angular --access public --provenance
 
   tag:
     needs: [version, deploy-dotnet, deploy-angular]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-
     - name: Create GitHub Release and Tag
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v3.0.3
       with:
-        tag_name: v${{ needs.version.outputs.nuGetVersion }}
-        name: v${{ needs.version.outputs.nuGetVersion }}
+        tag_name: v${{ needs.version.outputs.semVer }}
+        name: v${{ needs.version.outputs.semVer }}
+        target_commitish: ${{ github.sha }}
         generate_release_notes: true
         prerelease: ${{ needs.version.outputs.preReleaseLabel != '' }}
 

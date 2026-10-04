@@ -1,7 +1,7 @@
 {
   "name": "remootio-angular",
   "version": "0.1.0",
-  "homepage": "https://github.com/erenken/gateMonitor/tree/main/projects/remootio-angular",
+  "homepage": "https://github.com/erenken/gateMonitor/tree/main/angular/projects/remootio-angular",
   "bugs": {
     "url": "https://github.com/erenken/gateMonitor/issues"
   },
@@ -9,24 +9,18 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/erenken/gateMonitor",
-    "directory": "projects/remootio-angular"
+    "directory": "angular/projects/remootio-angular"
   },
-  "bundledDependencies": [
-    "crypto-js"
-  ],
   "peerDependencies": {
-    "@angular/common": "^22.0.0",
-    "@angular/core": "^22.0.0",
+    "@angular/common": "^22.2.1",
+    "@angular/core": "^22.2.1",
     "crypto-js": "^4.2.0",
-    "rxjs": "^7.8.0"
+    "rxjs": "^7.8.2"
   },
   "dependencies": {
-    "tslib": "^2.6.0"
+    "tslib": "^2.8.1"
   },
   "devDependencies": {
-    "@types/crypto-js": "^4.2.0"
-  },
-  "bundleDependencies": [
-    "crypto-js"
-  ]
+    "@types/crypto-js": "^4.2.2"
+  }
 }

@@ -1,100 +1,121 @@
 name: PR Build and Test
 
-permissions:
-  contents: read
-  pull-requests: write
-  checks: write
-
 on:
   pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
-  dotnet-build-test:
-    name: .NET Build & Test
+  version:
+    name: Determine Version
     runs-on: ubuntu-latest
-
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
+        persist-credentials: false
+    - uses: gittools/actions/gitversion/setup@v4.7.0
+      with:
+        versionSpec: '6.8.2'
+    - id: gitversion
+      uses: gittools/actions/gitversion/execute@v4.7.0
+      with:
+        configFilePath: GitVersion.yml
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+  dotnet-build-test:
+    name: .NET Build & Test
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7.0.1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: |
-          8.x
-          10.x
-
+          8.0.x
+          10.0.x
     - name: Restore .NET dependencies
-      run: dotnet restore dotnet/GateMonitor.slnx
-
+      run: dotnet restore dotnet/GateMonitor.slnx -warnaserror
     - name: Build .NET solution
-      run: dotnet build dotnet/GateMonitor.slnx --configuration Release --no-restore
-
+      run: dotnet build dotnet/GateMonitor.slnx --configuration Release --no-restore -warnaserror
     - name: Run .NET tests
-      run: dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
-
-    - name: Publish test results
-      uses: dorny/test-reporter@v1
-      if: always() && github.event_name == 'pull_request'
+      run: dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build --no-restore --verbosity normal --logger trx --collect:"XPlat Code Coverage"
+    - name: Validate NuGet packaging
+      env:
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: dotnet pack dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release --no-build --no-restore --include-symbols --output .pack -p:PackageVersion="$PACKAGE_VERSION" -warnaserror
+    - name: Verify SourceLink symbol package
+      run: |
+        dotnet tool install sourcelink --version 3.1.1 --tool-path .tools
+        unzip -q .pack/*.snupkg -d .pack/symbols
+        .tools/sourcelink test .pack/symbols/lib/net8.0/myNOC.Remootio.pdb
+        .tools/sourcelink test .pack/symbols/lib/net10.0/myNOC.Remootio.pdb
+    - name: Upload .NET test results
+      uses: actions/upload-artifact@v7.0.1
+      if: always()
       with:
-        name: .NET Test Results
-        path: '**/test-results.trx'
-        reporter: dotnet-trx
-        fail-on-error: false
-      continue-on-error: true
+        name: dotnet-test-results
+        path: dotnet/tests/**/TestResults/**
+        if-no-files-found: warn
 
   angular-build-test:
     name: Angular Build & Test
+    needs: version
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./angular
-
+        working-directory: angular
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v7.0.1
       with:
-        fetch-depth: 0
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+        persist-credentials: false
+    - uses: actions/setup-node@v7.0.0
       with:
-        node-version: '24'
-        cache: 'npm'
+        node-version: '26'
+        cache: npm
         cache-dependency-path: angular/package-lock.json
-
     - name: Install Angular dependencies
       run: npm ci
-
+    - name: Set library version
+      env:
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: npm run versionService
     - name: Build remootio-angular library
       run: npm run buildService
-
     - name: Build Angular app
-      run: npm run build --if-present
-
+      run: npm run build
+    - name: Install test browser
+      run: npx playwright install --with-deps chromium
     - name: Run Angular tests
-      run: npm test -- --watch=false --browsers=ChromeHeadless
-
-    - name: Lint Angular code
-      run: npm run lint --if-present
-      continue-on-error: true
+      run: npm test -- --watch=false --browsers=ChromiumHeadless
+    - name: Validate npm packaging
+      env:
+        PACKAGE_VERSION: ${{ needs.version.outputs.semVer }}
+      run: |
+        npm run verifyServiceVersion
+        npm pack ./dist/remootio-angular --dry-run
 
   status-check:
     name: All Checks Passed
     runs-on: ubuntu-latest
-    needs: [dotnet-build-test, angular-build-test]
+    needs: [version, dotnet-build-test, angular-build-test]
     if: always()
-
     steps:
     - name: Check build status
+      env:
+        VERSION_RESULT: ${{ needs.version.result }}
+        DOTNET_RESULT: ${{ needs.dotnet-build-test.result }}
+        ANGULAR_RESULT: ${{ needs.angular-build-test.result }}
       run: |
-        if [ "${{ needs.dotnet-build-test.result }}" != "success" ] || [ "${{ needs.angular-build-test.result }}" != "success" ]; then
+        if [ "$VERSION_RESULT" != "success" ] || [ "$DOTNET_RESULT" != "success" ] || [ "$ANGULAR_RESULT" != "success" ]; then
           echo "One or more jobs failed"
           exit 1
         fi

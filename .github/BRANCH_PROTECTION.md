@@ -60,8 +60,8 @@ With branch protection enabled:
 ### Angular Build & Test
 - Installs npm dependencies
 - Builds the Angular app and library
-- Runs Karma/Jasmine tests in headless Chrome
-- Runs ESLint (non-blocking)
+- Runs Vitest tests in headless Chromium
+- Validates the built npm package without publishing
 
 ### All Checks Passed
 - Final status check that verifies both jobs succeeded

@@ -48,7 +48,7 @@ dotnet/
 
 - Library tests target the same TFMs as the library (`net8.0;net10.0`).
 - Component tests target `net10.0` only.
-- `bUnit.TestContext` aliased as `BunitContext` to avoid ambiguity with `MSTest.TestContext`.
+- `Bunit.BunitContext` aliased as `BunitContext` to avoid ambiguity with `MSTest.TestContext`.
 - `System.Timers.Timer` is not started in tests because `GateImageUrl` is set to empty string in test setup.
 - Use `NSubstitute` for mocking (not Moq) — consistent with the WeatherLink sibling project.
 
@@ -56,4 +56,4 @@ dotnet/
 
 - Never commit real `DeviceIp`, `ApiSecretKey`, or `ApiAuthKey` values.
 - Use `appsettings.Development.json` (git-ignored) for local overrides.
-- The release pipeline uses `NUGET_PUBLISH` and `npm_token` repository secrets.
+- The release pipeline uses GitHub OIDC trusted publishing for NuGet and npm; it does not read long-lived publishing secrets. See [Publishing setup](../PUBLISHING.md).

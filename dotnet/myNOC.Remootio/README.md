@@ -8,6 +8,32 @@ This library ports the official [remootio-api-client-node](https://github.com/re
 
 Designed to work in both ASP.NET Core server apps and Blazor WebAssembly SPAs (the browser's native WebSocket handles the device connection in WASM).
 
+## Compatibility and Publishing
+
+The package targets .NET 8 and .NET 10. Build and run all library and Blazor tests from the repository root:
+
+```bash
+dotnet build dotnet/GateMonitor.slnx --configuration Release -warnaserror
+dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build
+```
+
+The release pipeline supplies GitVersion `semVer` as `PackageVersion` when packing NuGet and uses the same version for the Angular package and GitHub release tag. NuGet authentication uses GitHub OIDC through `NuGet/login`, not a long-lived repository API key. See [Publishing setup](../../.github/PUBLISHING.md).
+
+## SourceLink and Symbols
+
+Builds produce portable PDBs; NuGet packing produces a separate `.snupkg` containing symbols for both target frameworks. The main package contains the assemblies, README and license, not duplicate PDBs. `PublishRepositoryUrl` records the GitHub URL and exact source commit. The SourceLink package keeps its build assets enabled while `PrivateAssets=all` prevents build tooling from becoming a consumer dependency.
+
+GitHub Actions enables `ContinuousIntegrationBuild` for normalized source paths, extracts each symbol package and runs `sourcelink test` against both PDBs before publishing. That checks source downloads and document checksums, not just the presence of SourceLink metadata. For a local CI-style build and verification:
+
+```bash
+dotnet build dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release -p:ContinuousIntegrationBuild=true -warnaserror
+dotnet tool install sourcelink --version 3.1.1 --tool-path .pack/sourcelink
+.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net8.0/myNOC.Remootio.pdb
+.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net10.0/myNOC.Remootio.pdb
+```
+
+On Windows, use `.pack/sourcelink/sourcelink.exe`. Remote SourceLink checks require network access and a commit available on GitHub. Locally edited tracked source may fail checksums until its commit is pushed. Generated/untracked sources are embedded. Consumers must enable Source Link support in their debugger; NuGet.org symbol-server settings are also needed to fetch the `.snupkg` symbols.
+
 ## Setup and Configuration
 
 Add the Remootio service to your `IServiceCollection`. The same `RemootioService` instance is registered as both `IHostedService` (manages the WebSocket connection lifecycle) and `IRemootioService` (exposes gate state to your components):
