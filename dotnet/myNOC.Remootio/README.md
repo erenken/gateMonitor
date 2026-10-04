@@ -1,6 +1,3 @@
-[![Build and Test](https://github.com/erenken/gateMonitor/actions/workflows/pr-build-test.yml/badge.svg)](https://github.com/erenken/gateMonitor/actions/workflows/pr-build-test.yml) [![Release](https://github.com/erenken/gateMonitor/actions/workflows/dotnet-release.yml/badge.svg?branch=main)](https://github.com/erenken/gateMonitor/actions/workflows/dotnet-release.yml) <a href="https://www.nuget.org/packages/myNOC.Remootio"><img src="https://img.shields.io/nuget/v/myNOC.Remootio.svg" alt="NuGet Version" /></a>
-<a href="https://www.nuget.org/packages/myNOC.Remootio"><img src="https://img.shields.io/nuget/dt/myNOC.Remootio.svg" alt="NuGet Download Count" /></a>
-
 # myNOC.Remootio
 
 ## Overview
