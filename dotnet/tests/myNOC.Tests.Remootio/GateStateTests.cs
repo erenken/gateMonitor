@@ -3,7 +3,7 @@ namespace myNOC.Tests.Remootio;
 [TestClass]
 public class GateStateTests
 {
-    [DataTestMethod]
+    [TestMethod]
     [DataRow(true, "Open")]
     [DataRow(false, "Closed")]
     public void Description_ReflectsIsOpen(bool isOpen, string expected)

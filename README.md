@@ -29,7 +29,7 @@ gateMonitor/
 │   └── GateMonitor.slnx             # .NET solution (SLNX format)
 └── .github/
     ├── workflows/
-    │   ├── dotnet-build.yml         # PR: build + test (.NET & Angular)
+    │   ├── pr-build-test.yml        # PR: build + test (.NET & Angular)
     │   └── dotnet-release.yml       # Main: NuGet + NPM publish + tag
     └── instructions/                # Copilot architecture guidance
 ```
@@ -44,10 +44,9 @@ The Angular app connects directly from the browser to the Remootio device WebSoc
 
 ```bash
 cd angular
-npm install
-npm install --prefix ./projects/remootio-angular/
-ng build remootio-angular
-ng serve -o
+npm ci
+npm run buildService
+npm start -- --open
 ```
 
 ### Configuration
@@ -74,11 +73,11 @@ The Blazor app is a standalone WebAssembly SPA that also connects directly from 
 ### Run with Aspire (recommended)
 
 ```bash
-cd dotnet
-dotnet run --project GateMonitor.AppHost
+dotnet tool install --global Aspire.Cli --version 13.6.0
+aspire run --apphost dotnet/GateMonitor.AppHost/GateMonitor.AppHost.csproj
 ```
 
-This launches the Aspire dashboard and starts the Blazor dev server. Open the Aspire dashboard URL to navigate to the app.
+The AppHost uses the Aspire CLI bundle. This launches the Aspire dashboard and both frontend dev servers; Angular builds its library in the npm prestart hook. Run `npm ci` in `angular/` first. Open the Aspire dashboard URL to navigate to the app.
 
 ### Run standalone
 
@@ -125,10 +124,14 @@ dotnet add package myNOC.Remootio
 
 | Workflow | Trigger | What it does |
 |----------|---------|--------------|
-| `dotnet-build.yml` | PR → main | GitVersion, .NET build + test, Angular build |
-| `dotnet-release.yml` | Push → main | GitVersion, NuGet push, NPM publish, git tag + GitHub release |
+| `pr-build-test.yml` | PR → main, manual, reusable | GitVersion, .NET and Angular builds/tests, package validation |
+| `dotnet-release.yml` | Push → main | Reuses validation, publishes through OIDC, creates git tag + GitHub release |
 
-**Required secrets:** `NUGET_PUBLISH`, `npm_token`
+**Publishing authentication:** GitHub OIDC trusted publishing; no long-lived npm or NuGet publishing secrets are required. See [Publishing setup](.github/PUBLISHING.md).
+
+GitVersion 6.8.2 uses `semVer` for both package registries. `next-version: 1.0.0` intentionally makes the next stable release 1.0.0; `work/` branches produce alpha prereleases. Keep the full git history and release tags available to CI. Before npm publishing, CI stamps the library package and lockfile with that version, builds it, and verifies that the publish directory has the exact same version. A mismatch blocks publishing. These version changes stay in the runner checkout; CI does not create a version-bump commit. NuGet uses portable PDBs in `.snupkg` files, publishes the GitHub repository URL/commit, and verifies SourceLink URLs and checksums for both frameworks before publishing.
+
+Dependency versions are pinned for NuGet and captured in npm lockfiles. Angular 22.2 requires TypeScript 6.0, so TypeScript 7 is intentionally excluded. Tests use Vitest 5 with Playwright, replacing deprecated Karma/Jasmine tooling. The Angular workspace is installed once with `npm ci` in `angular/`; the library does not need a separate install.
 
 
 Once the connection to Remootio is made and authenticated the web site will display a bar indicating if the gate is open or closed and 2 buttons.  One to Open and one to Close the gate.
@@ -147,7 +150,7 @@ Once the connection to Remootio is made and authenticated the web site will disp
 </mat-card>
 ```
 
-The style sheet can be found in [styles.scss](./src/styles.scss).  The bar is <span style="color:green">Green</span> when the gate is closed or <span style="color:red">Red</span> when open.
+The style sheet can be found in [styles.scss](./angular/src/styles.scss).  The bar is <span style="color:green">Green</span> when the gate is closed or <span style="color:red">Red</span> when open.
 
 To display your own gate image, you will need to change the `gateImage` URL.  To get the proper URL for a snap image from your camera you will need to look at your camera documentation.  I use a [UniFi G4 Instance](https://store.ui.com/collections/unifi-protect/products/camera-g4-instant), so once [enabled](https://jjj.blog/2019/12/get-snap-jpeg-from-unifi-protect-cameras/) the URL is just `https://{cameraIp}/snap.jpeg`.  Your camera will most likely be different.
 
@@ -168,28 +171,4 @@ HTML to display the gate image.
 
 ## Run
 
-To run the site you will need Angular 22 CLI
-
-```bash
-npm install -g @angular/cli
-```
-
-Once that is installed you should run npm install in the angular folder.
-
-```bash
-cd angular
-npm install
-```
-
-Once you have ran `npm install`, build the remootio-angular library:
-
-```bash
-cd angular
-ng build remootio-angular
-```
-
-Then build and run the main Angular project:
-
-```bash
-ng serve -o
-```
+Use Node.js 26 and the workspace-local Angular CLI installed by `npm ci`; a global CLI is not required. Follow the [Angular dashboard README](angular/README.md) for development, production builds, tests and package-version validation.

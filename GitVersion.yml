@@ -5,4 +5,4 @@ branches:
     regex: '^work[/-]'
     label: alpha
     increment: Minor
-    is-mainline: false
+    source-branches: [main]

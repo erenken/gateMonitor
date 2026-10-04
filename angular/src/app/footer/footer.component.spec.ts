@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { AppModule } from '../app.module';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { FooterComponent } from './footer.component';
@@ -9,8 +10,7 @@ describe('FooterComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MatDividerModule],
-      declarations: [ FooterComponent ]
+      imports: [AppModule, MatDividerModule]
     })
     .compileComponents();
   });

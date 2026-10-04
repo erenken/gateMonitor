@@ -1,19 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { AppModule } from '../app.module';
 import { MatDividerModule } from '@angular/material/divider';
 import { RouterModule } from '@angular/router';
 import { AppComponent } from './app.component';
-import { FooterComponent } from '../footer/footer.component';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
+      imports: [AppModule,
         MatDividerModule,
         RouterModule.forRoot([])
-      ],
-      declarations: [
-        AppComponent,
-        FooterComponent
       ],
     }).compileComponents();
   });

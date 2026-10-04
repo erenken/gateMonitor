@@ -5,7 +5,7 @@
   <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
 </a>
 
-This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is a Angular Service written using Angular 15.0.0.
+This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is an Angular service targeting Angular 22.2.
 
 [Remootio](https://www.remootio.com/) is a smart gate and garage door controller product.  
 
@@ -18,11 +18,47 @@ npm install crypto-js --save
 npm install remootio-angular --save
 ```
 
+## Build and Release
+
+From the repository root:
+
+```bash
+cd angular
+npm ci
+npm run buildService
+npm pack ./dist/remootio-angular --dry-run
+```
+
+The library requires Angular 22.2-compatible peers (`@angular/common`, `@angular/core`, `rxjs` and `crypto-js`). The dashboard and library share the workspace install.
+
+GitHub Actions derives the release version from GitVersion `semVer`, updates this package manifest and lockfile **before** building, and verifies the version in `dist/remootio-angular/package.json` before publishing. The checked-in version is a development baseline, not the CI release version; no automated version-bump commit is created.
+
+To reproduce version stamping locally, run these commands from `angular/`, replacing the sample with the intended version:
+
+```bash
+PACKAGE_VERSION=1.0.0-alpha.2 npm run versionService
+npm run buildService
+```
+
+Then set `PACKAGE_VERSION` to that same value and run `npm run verifyServiceVersion`. In PowerShell:
+
+```powershell
+$env:PACKAGE_VERSION = "1.0.0-alpha.2"
+npm.cmd run versionService
+npm.cmd run buildService
+npm.cmd run verifyServiceVersion
+npm.cmd pack ./dist/remootio-angular --dry-run
+```
+
+Manual `npm run deployService` also requires `PACKAGE_VERSION` and stamps, builds and verifies before publishing. Prefer GitHub Actions for trusted publishing; a local publish needs your own npm authentication.
+
+These local commands modify the source package and lockfile; review those changes before committing. CI publishes only the built directory after verification, using GitHub OIDC trusted publishing with provenance. See [Publishing setup](../../../.github/PUBLISHING.md). Local dry runs do not publish or validate OIDC authentication.
+
 ## Usage
 
 ### Step 1
 
-Import the module into your app module
+Register the service in your app module providers
 
 ```ts
 import { RemootioAngularService } from 'remootio-angular';
