@@ -43,6 +43,68 @@ PR/reusable validation runs the same version check and packaging dry run. NuGet 
 
 Manual `npm run deployService` uses the same stamp/build/verify sequence and requires an explicit semantic `PACKAGE_VERSION`; it fails before publishing if that value is absent. It does not derive a local GitVersion automatically. Local publishing requires your own npm authentication; trusted publishing is used by GitHub Actions. Prefer CI publishing.
 
+## Building and verifying the Angular package
+
+Install dependencies once at the Angular workspace root; a separate library install is not needed:
+
+```bash
+cd angular
+npm ci
+```
+
+To build and inspect a package using the checked-in development version, run from `angular/`:
+
+```bash
+npm run buildService
+npm pack ./dist/remootio-angular --dry-run
+```
+
+To reproduce CI version stamping, replace the sample version with the intended version and run from `angular/`. In Bash:
+
+```bash
+export PACKAGE_VERSION=1.0.0-alpha.2
+npm run versionService
+npm run buildService
+npm run verifyServiceVersion
+npm pack ./dist/remootio-angular --dry-run
+```
+
+In PowerShell:
+
+```powershell
+$env:PACKAGE_VERSION = "1.0.0-alpha.2"
+npm.cmd run versionService
+npm.cmd run buildService
+npm.cmd run verifyServiceVersion
+npm.cmd pack ./dist/remootio-angular --dry-run
+```
+
+Version stamping modifies the source library manifest and lockfile; review those changes before committing. Only `dist/remootio-angular` is published, never the private dashboard package. Local dry runs inspect package contents but do not publish or validate OIDC authentication. For workspace development and tests, see the [Angular dashboard README](../angular/README.md).
+
+## Building and verifying the .NET package
+
+Build and run all library and Blazor tests from the repository root:
+
+```bash
+dotnet build dotnet/GateMonitor.slnx --configuration Release -warnaserror
+dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build
+```
+
+### Source Link and symbols
+
+Builds produce portable PDBs; NuGet packing produces a separate `.snupkg` containing symbols for both target frameworks. The main package contains the assemblies, README and license, not duplicate PDBs. `PublishRepositoryUrl` includes the GitHub repository URL in package metadata, and Source Link maps tracked source files to the exact source commit. The Source Link package keeps its build assets enabled while `PrivateAssets=all` prevents build tooling from becoming a consumer dependency.
+
+GitHub Actions enables `ContinuousIntegrationBuild` for normalized source paths, extracts each symbol package and runs `sourcelink test` against both PDBs before publishing. That checks source downloads and document checksums, not just the presence of Source Link metadata. For a local CI-style build and verification, run from the repository root:
+
+```bash
+dotnet build dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release -p:ContinuousIntegrationBuild=true -warnaserror
+dotnet tool install sourcelink --version 3.1.1 --tool-path .pack/sourcelink
+.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net8.0/myNOC.Remootio.pdb
+.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net10.0/myNOC.Remootio.pdb
+```
+
+On Windows, use `.pack/sourcelink/sourcelink.exe`. Remote Source Link checks require network access and a commit available on GitHub. Locally edited tracked source may fail checksums until its commit is pushed. Generated/untracked sources are embedded. These local commands verify the build-output PDBs; CI also verifies the PDBs extracted from the packed `.snupkg`.
+
 ## Security and migration
 
 Provider trust is scoped to the repository and workflow filename, not a branch. The committed workflow only triggers on main. Protect main and review workflow changes carefully. For provider-enforced branch restrictions, add a GitHub environment restricted to main, then configure the identical environment name in both provider policies and both publishing jobs.

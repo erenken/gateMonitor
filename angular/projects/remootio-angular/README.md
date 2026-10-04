@@ -1,146 +1,103 @@
-# Remootio Angular Service
+# remootio-angular
 
-<a href="https://www.npmjs.com/package/remootio-angular">
-  <img src="https://img.shields.io/npm/v/remootio-angular.svg?orange=blue" />
-  <img alt="downloads" src="https://img.shields.io/npm/dt/remootio-angular.svg?color=blue" target="_blank" />
-</a>
+[![npm version](https://img.shields.io/npm/v/remootio-angular.svg)](https://www.npmjs.com/package/remootio-angular)
+[![npm downloads](https://img.shields.io/npm/dt/remootio-angular.svg)](https://www.npmjs.com/package/remootio-angular)
 
-This service is a conversion of the [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) module for use in Angular.  This module is an Angular service targeting Angular 22.2.
+An Angular service for communicating with a [Remootio](https://www.remootio.com/) smart gate or garage door controller over its WebSocket API. It handles authentication, encrypted commands, and real-time gate state updates.
 
-[Remootio](https://www.remootio.com/) is a smart gate and garage door controller product.  
+The library ports the official [Remootio API Client for Node.js](https://github.com/remootio/remootio-api-client-node) and is used by the GateMonitor dashboard with a [Ghost Controls](https://ghostcontrols.com) gate.
 
-I created this service for use in my own project to work with my [Ghost Controls](https://ghostcontrols.com) gate.
+## Installation and Compatibility
 
-## Install
+Install in your Angular application:
 
 ```bash
-npm install crypto-js --save
-npm install remootio-angular --save
+npm install remootio-angular crypto-js
 ```
 
-## Build and Release
+Your application must provide these peer dependencies:
 
-From the repository root:
-
-```bash
-cd angular
-npm ci
-npm run buildService
-npm pack ./dist/remootio-angular --dry-run
-```
-
-The library requires Angular 22.2-compatible peers (`@angular/common`, `@angular/core`, `rxjs` and `crypto-js`). The dashboard and library share the workspace install.
-
-GitHub Actions derives the release version from GitVersion `semVer`, updates this package manifest and lockfile **before** building, and verifies the version in `dist/remootio-angular/package.json` before publishing. The checked-in version is a development baseline, not the CI release version; no automated version-bump commit is created.
-
-To reproduce version stamping locally, run these commands from `angular/`, replacing the sample with the intended version:
-
-```bash
-PACKAGE_VERSION=1.0.0-alpha.2 npm run versionService
-npm run buildService
-```
-
-Then set `PACKAGE_VERSION` to that same value and run `npm run verifyServiceVersion`. In PowerShell:
-
-```powershell
-$env:PACKAGE_VERSION = "1.0.0-alpha.2"
-npm.cmd run versionService
-npm.cmd run buildService
-npm.cmd run verifyServiceVersion
-npm.cmd pack ./dist/remootio-angular --dry-run
-```
-
-Manual `npm run deployService` also requires `PACKAGE_VERSION` and stamps, builds and verifies before publishing. Prefer GitHub Actions for trusted publishing; a local publish needs your own npm authentication.
-
-These local commands modify the source package and lockfile; review those changes before committing. CI publishes only the built directory after verification, using GitHub OIDC trusted publishing with provenance. See [Publishing setup](../../../.github/PUBLISHING.md). Local dry runs do not publish or validate OIDC authentication.
+| Package | Supported version range |
+| --- | --- |
+| `@angular/common` | `^22.2.1` |
+| `@angular/core` | `^22.2.1` |
+| `rxjs` | `^7.8.2` |
+| `crypto-js` | `^4.2.0` |
 
 ## Usage
 
-### Step 1
-
-Register the service in your app module providers
+`RemootioAngularService` is provided in the root injector, so you can inject it directly without adding a provider. This standalone component connects to the device and displays gate controls:
 
 ```ts
+import { AsyncPipe } from '@angular/common';
+import { Component, inject, OnInit } from '@angular/core';
 import { RemootioAngularService } from 'remootio-angular';
 
-...
+@Component({
+  selector: 'app-gate',
+  standalone: true,
+  imports: [AsyncPipe],
+  template: `
+    @let state = remootio.gateState$ | async;
+    @let connected = remootio.connectionChanged$ | async;
 
-providers: [
-  RemootioAngularService
-]
-```
+    @if (connected && remootio.isAuthenticated && state) {
+      <p>Gate is {{ state.description }}</p>
+      <button (click)="remootio.openGate()" [disabled]="state.isOpen">
+        Open
+      </button>
+      <button (click)="remootio.closeGate()" [disabled]="!state.isOpen">
+        Close
+      </button>
+    } @else {
+      <p>Waiting for an authenticated connection and gate state...</p>
+    }
+  `
+})
+export class GateComponent implements OnInit {
+  readonly remootio = inject(RemootioAngularService);
 
-### Step 2
-
-Inject the service into your component's TypeScript constructor and subscribe to state changes.
-
-```ts
-constructor(private remootioService: RemootioAngularService) { };
-```
-
-## Example
-
-In your component TypeScript file create a public field variable that is a `Subject<IGateState>()`
-
-```ts
-public gateState$ = new Subject<IGateState>();
-```
-
-We wire up the `gateState$` in the constructor.
-
-```ts
-constructor(private remootioService: RemootioAngularService) {
-  remootioService.gateState$.subscribe(gateState => {
-    this.gateState$.next(gateState);
-  })
-};
-```
-
-This can then be used in the component to display if the gate is open or closed.
-
-```html
-<div *ngIf="isAuthenticated">
-  <button (click)='closeGate()' [disabled]="!(gateState$ | async)?.isOpen">Close</button>
-  &nbsp;
-  <button (click)='openGate()' [disabled]="(gateState$ | async)?.isOpen">Open</button>
-</div>
-```
-
-In this example if the gate is Open then the Close button will be active and Open button will be disabled.  By using the async pipe when the underlying observable `gateState$` receives data the buttons will change.
-
-We still need to connect to the Remootio device and to do that we call the `connect` method in the `ngOnInit()` method:
-
-```ts
-ngOnInit(): void {
-  this.remootioService.connect({
-    deviceIp: '{remootioDeviceIp}',
-    apiSecretKey: '{apiSecretKey}',
-    apiAuthKey: '{apiAuthKey}',
-    autoReconnect: true
-  });
+  ngOnInit(): void {
+    this.remootio.connect({
+      deviceIp: '192.168.1.50',
+      apiSecretKey: '<64-character hex API secret key>',
+      apiAuthKey: '<64-character hex API authentication key>'
+    });
+  }
 }
 ```
 
-This will start the WebSocket connection to the Remootio and authenticate.  If you don't specifiy `sendPingMessageEveryXMs` in the `IRemootioDeviceConfig` when calling the `connect` method, it will automatically be set to 60 seconds.  This keeps the connection alive, so you continue to receive events.
+Replace the placeholders with the keys from the Remootio mobile app's API settings. The browser must be able to reach the device at `ws://{deviceIp}:8080/`. Open/Close commands require a configured gate status sensor on the device.
 
-You can also Open or Close the gate.  In the HTML above each button is bound to a method on the `(click)` event.
+The example binds directly to the service streams. Angular's [AsyncPipe](https://angular.dev/api/common/AsyncPipe) updates the view and unsubscribes when the component is destroyed. The streams do not replay earlier values, so subscribe before connecting; the example keeps both subscriptions outside the conditional controls.
 
-```ts
-closeGate() {
-  this.remootioService.closeGate();
-}
+Keep real API keys out of version control. Keys included in a browser bundle or runtime configuration are visible to users who can access the application.
 
-openGate() {
-  this.remootioService.openGate();
-}
-```
+## Configuration
 
-Each method calls its corresponding action in the `remootioService`.
+`connect()` accepts an `IRemootioDeviceConfig`:
 
-The last part is the `*ngIf="isAuthenticated"` in the outside `<div>`.  This is here so the buttons don't show up unless we have an authenticated connection to the Remootio device.  You can expose this in your components TypeScipt.
+| Property | Description |
+| --- | --- |
+| `deviceIp` | Required device IP address; the library uses WebSocket port 8080. |
+| `apiSecretKey` | Required 64-character hexadecimal API secret key. |
+| `apiAuthKey` | Required 64-character hexadecimal API authentication key. |
+| `sendPingMessageEveryXMs` | Optional keep-alive interval in milliseconds; defaults to 60000. |
+| `autoReconnect` | Accepted by the interface, but automatic reconnection is not currently implemented. |
 
-```ts
-get isAuthenticated(): boolean {
-  return this.remootioService.isAuthenticated;
-}
-```
+## Service API
+
+| Member | Description |
+| --- | --- |
+| `connect(config)` | Starts the WebSocket connection and authentication flow, then queries gate state. |
+| `gateState$` | Emits `IGateState` values with `isOpen` and `description` (`Open` or `Closed`). |
+| `connectionChanged$` | Emits a connection boolean; check `isAuthenticated` separately. |
+| `isAuthenticated` | Reports whether the service has an authenticated connection. |
+| `openGate()` | Sends an Open command to the device. |
+| `closeGate()` | Sends a Close command to the device. |
+| `errors$` | Emits errors reported by the protocol client. |
+| `messages$` | Emits decrypted device messages. |
+
+## Development
+
+For workspace builds and tests, see the [Angular dashboard README](https://github.com/erenken/gateMonitor/blob/main/angular/README.md). Maintainer instructions for version stamping, package verification, and publishing are in the [publishing guide](https://github.com/erenken/gateMonitor/blob/main/.github/PUBLISHING.md).
