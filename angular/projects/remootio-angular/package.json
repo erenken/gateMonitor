@@ -8,7 +8,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/erenken/gateMonitor",
+    "url": "git+https://github.com/erenken/gateMonitor.git",
     "directory": "angular/projects/remootio-angular"
   },
   "peerDependencies": {

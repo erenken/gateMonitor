@@ -25,11 +25,13 @@ The workflow uses NuGet/login v1.2.0 with user erenken, then passes its short-li
 
 Open remootio-angular package Settings and add a GitHub Actions trusted publisher with the values above. Enable Allow npm publish to preserve automatic direct releases; leave Allow npm dist-tag disabled. Direct publishing does not require a separate human approval in npm. npm also supports staged publishing if manual approval is preferred in a future change.
 
-The workflow explicitly installs npm 12.2.0, publishes the built angular/dist/remootio-angular directory, and requests provenance. It does not set NODE_AUTH_TOKEN. Keep the package repository URL pointing to https://github.com/erenken/gateMonitor so provenance matches the GitHub repository.
+The workflow explicitly installs npm 12.2.0, publishes the built angular/dist/remootio-angular directory with `--tag latest`, and requests provenance. It does not set NODE_AUTH_TOKEN. Keep the package repository URL set to `git+https://github.com/erenken/gateMonitor.git` so npm accepts the canonical Git URL and provenance matches the GitHub repository.
 
 ## Version stamping and pre-publish validation
 
-Both registries and the GitHub tag use GitVersion `semVer`. The npm publishing job performs these steps in order:
+Both registries and the GitHub tag use GitVersion `semVer`. The `main` branch uses `mode: ContinuousDeployment` with `label: ''` to produce stable `major.minor.patch` versions. Before either publishing job starts, the version job rejects prerelease suffixes, build metadata, and malformed versions. GitHub releases are explicitly marked as stable. Work branches may still produce alpha versions for PR validation, but cannot publish. Successful release tags establish the baseline for the next stable version.
+
+The npm publishing job performs these steps in order:
 
 1. Install the Angular workspace with `npm ci`.
 2. Run `npm run versionService` with `PACKAGE_VERSION` set to GitVersion `semVer`. The script invokes `npm version "$PACKAGE_VERSION" --no-git-tag-version --allow-same-version` in `angular/projects/remootio-angular`. This updates the library manifest and lockfile before building.

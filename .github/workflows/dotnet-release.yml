@@ -20,7 +20,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       semVer: ${{ steps.gitversion.outputs.semVer }}
-      preReleaseLabel: ${{ steps.gitversion.outputs.preReleaseLabel }}
     steps:
     - uses: actions/checkout@v7.0.1
       with:
@@ -33,6 +32,14 @@ jobs:
       uses: gittools/actions/gitversion/execute@v4.7.0
       with:
         configFilePath: GitVersion.yml
+    - name: Require a stable release version
+      env:
+        PACKAGE_VERSION: ${{ steps.gitversion.outputs.semVer }}
+      run: |
+        if [[ ! "$PACKAGE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+          echo "::error::Main releases require a stable major.minor.patch version; got '$PACKAGE_VERSION'."
+          exit 1
+        fi
 
   deploy-dotnet:
     needs: version
@@ -108,7 +115,7 @@ jobs:
     - name: Setup npm with trusted publishing support
       run: npm install --global npm@12.2.0
     - name: Publish npm with OIDC
-      run: npm publish ./dist/remootio-angular --access public --provenance
+      run: npm publish ./dist/remootio-angular --access public --provenance --tag latest
 
   tag:
     needs: [version, deploy-dotnet, deploy-angular]
@@ -123,5 +130,5 @@ jobs:
         name: v${{ needs.version.outputs.semVer }}
         target_commitish: ${{ github.sha }}
         generate_release_notes: true
-        prerelease: ${{ needs.version.outputs.preReleaseLabel != '' }}
+        prerelease: false
 
