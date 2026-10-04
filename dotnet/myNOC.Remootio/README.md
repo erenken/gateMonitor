@@ -1,6 +1,3 @@
-[![Build and Test](https://github.com/erenken/gateMonitor/actions/workflows/pr-build-test.yml/badge.svg)](https://github.com/erenken/gateMonitor/actions/workflows/pr-build-test.yml) [![Release](https://github.com/erenken/gateMonitor/actions/workflows/dotnet-release.yml/badge.svg?branch=main)](https://github.com/erenken/gateMonitor/actions/workflows/dotnet-release.yml) <a href="https://www.nuget.org/packages/myNOC.Remootio"><img src="https://img.shields.io/nuget/v/myNOC.Remootio.svg" alt="NuGet Version" /></a>
-<a href="https://www.nuget.org/packages/myNOC.Remootio"><img src="https://img.shields.io/nuget/dt/myNOC.Remootio.svg" alt="NuGet Download Count" /></a>
-
 # myNOC.Remootio
 
 ## Overview
@@ -11,31 +8,13 @@ This library ports the official [remootio-api-client-node](https://github.com/re
 
 Designed to work in both ASP.NET Core server apps and Blazor WebAssembly SPAs (the browser's native WebSocket handles the device connection in WASM).
 
-## Compatibility and Publishing
+## Installation and Compatibility
 
-The package targets .NET 8 and .NET 10. Build and run all library and Blazor tests from the repository root:
-
-```bash
-dotnet build dotnet/GateMonitor.slnx --configuration Release -warnaserror
-dotnet test dotnet/GateMonitor.slnx --configuration Release --no-build
-```
-
-The release pipeline supplies GitVersion `semVer` as `PackageVersion` when packing NuGet and uses the same version for the Angular package and GitHub release tag. NuGet authentication uses GitHub OIDC through `NuGet/login`, not a long-lived repository API key. See [Publishing setup](../../.github/PUBLISHING.md).
-
-## SourceLink and Symbols
-
-Builds produce portable PDBs; NuGet packing produces a separate `.snupkg` containing symbols for both target frameworks. The main package contains the assemblies, README and license, not duplicate PDBs. `PublishRepositoryUrl` records the GitHub URL and exact source commit. The SourceLink package keeps its build assets enabled while `PrivateAssets=all` prevents build tooling from becoming a consumer dependency.
-
-GitHub Actions enables `ContinuousIntegrationBuild` for normalized source paths, extracts each symbol package and runs `sourcelink test` against both PDBs before publishing. That checks source downloads and document checksums, not just the presence of SourceLink metadata. For a local CI-style build and verification:
+The package targets .NET 8 and .NET 10. Install it in your application project:
 
 ```bash
-dotnet build dotnet/myNOC.Remootio/myNOC.Remootio.csproj --configuration Release -p:ContinuousIntegrationBuild=true -warnaserror
-dotnet tool install sourcelink --version 3.1.1 --tool-path .pack/sourcelink
-.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net8.0/myNOC.Remootio.pdb
-.pack/sourcelink/sourcelink test dotnet/myNOC.Remootio/bin/Release/net10.0/myNOC.Remootio.pdb
+dotnet add package myNOC.Remootio
 ```
-
-On Windows, use `.pack/sourcelink/sourcelink.exe`. Remote SourceLink checks require network access and a commit available on GitHub. Locally edited tracked source may fail checksums until its commit is pushed. Generated/untracked sources are embedded. Consumers must enable Source Link support in their debugger; NuGet.org symbol-server settings are also needed to fetch the `.snupkg` symbols.
 
 ## Setup and Configuration
 
@@ -128,6 +107,12 @@ In a Blazor WebAssembly component, subscribe to events in `OnInitialized` and ca
         Remootio.GateStateChanged -= OnStateChanged;
 }
 ```
+
+## Debugging with Source Link
+
+The package supports Source Link, so your debugger can load the library source from the exact GitHub commit used to build your installed version. Debug symbols are published to the NuGet.org symbol server.
+
+To step into the library, enable Source Link support in your debugger and configure the NuGet.org symbol server. See Microsoft's [symbol and source debugging guide](https://learn.microsoft.com/en-us/visualstudio/debugger/specify-symbol-dot-pdb-and-source-files-in-the-visual-studio-debugger) for Visual Studio setup.
 
 ## Protocol Notes
 
