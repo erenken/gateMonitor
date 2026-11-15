@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+		<TargetFrameworks>net10.0;net11.0</TargetFrameworks>
 		<LangVersion>latest</LangVersion>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -46,16 +46,19 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401">
+		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="11.0.100">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
 
 	<!-- Runtime dependencies exposed to consumers of this package -->
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.12" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.12" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.14" Condition="'$(TargetFramework)' != 'net11.0'" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.14" Condition="'$(TargetFramework)' != 'net11.0'" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.14" Condition="'$(TargetFramework)' != 'net11.0'" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="11.0.0" Condition="'$(TargetFramework)' == 'net11.0'" />
 	</ItemGroup>
 
 </Project>
