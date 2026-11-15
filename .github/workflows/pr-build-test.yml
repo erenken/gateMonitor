@@ -40,8 +40,8 @@ jobs:
     - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: |
-          8.0.x
           10.0.x
+          11.0.x
     - name: Restore .NET dependencies
       run: dotnet restore dotnet/GateMonitor.slnx -warnaserror
     - name: Build .NET solution
@@ -56,8 +56,8 @@ jobs:
       run: |
         dotnet tool install sourcelink --version 3.1.1 --tool-path .tools
         unzip -q .pack/*.snupkg -d .pack/symbols
-        .tools/sourcelink test .pack/symbols/lib/net8.0/myNOC.Remootio.pdb
         .tools/sourcelink test .pack/symbols/lib/net10.0/myNOC.Remootio.pdb
+        .tools/sourcelink test .pack/symbols/lib/net11.0/myNOC.Remootio.pdb
     - name: Upload .NET test results
       uses: actions/upload-artifact@v7.0.1
       if: always()
